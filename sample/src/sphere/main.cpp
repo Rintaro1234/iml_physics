@@ -189,6 +189,11 @@ void Display(void)
 	if(g_num_trajectory){
 		// ボールの中心座標の軌跡の描画
 		// GL_LINE_STRIPを使ってみよう
+		glLineWidth(2.0); // 太さを指定
+		glBegin(GL_LINE_STRIP);
+		for (int i = 0; i < g_num_trajectory; i++)
+			glVertex3f(g_trajectories[i][0], g_trajectories[i][1], g_trajectories[i][2]);
+		glEnd();
 		glDisable(GL_LIGHTING);
 	}
 
@@ -214,6 +219,8 @@ void Timer(void)
 		//  配列g_trajectoriesに現在の位置座標をスタックしていく．
 		//  g_num_trajectoryをすでに格納された数とすると...
 		//  (g_num_trajectory >= MAX_TRAJとなったときのエラー処理も忘れずに)
+		if(g_num_trajectory < MAX_TRAJ)
+			g_trajectories[g_num_trajectory++] = g_ballpos;
 
 
 		// 位置の更新
