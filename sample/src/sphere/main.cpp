@@ -86,20 +86,62 @@ int g_num_trajectory = 0;					//!< 格納されたボールの座標の数
 */
 void rotationMatrix(float* mat, btVector3 axis, float rad) {
 	// matがちゃんと確保されているかどうかは判定しないので注意
+
+	// 平行移動はしない
 	mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0, mat[15] = 1;
 
 	// 回転行列を求める
 	float c = cos(rad);
 	float s = sin(rad);
-	mat[0] = c + axis[0] * axis[0] * (1 - c);
-	mat[4] = axis[0] * axis[1] * (1 - c) - axis[2] * s;
-	mat[8] = axis[0] * axis[2] * (1 - c) + axis[2] * s;
-	mat[1] = axis[0] * axis[1] * (1 - c) + axis[2] * s;
-	mat[5] = c + axis[1] * axis[1] * (1 - c);
-	mat[9] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
-	mat[2] = axis[0] * axis[2] * (1 - c) - axis[2] * s;
-	mat[6] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
+	mat[0]  = c + axis[0] * axis[0] * (1 - c);
+	mat[4]  = axis[0] * axis[1] * (1 - c) - axis[2] * s;
+	mat[8]  = axis[0] * axis[2] * (1 - c) + axis[2] * s;
+	mat[1]  = axis[0] * axis[1] * (1 - c) + axis[2] * s;
+	mat[5]  = c + axis[1] * axis[1] * (1 - c);
+	mat[9]  = axis[1] * axis[2] * (1 - c) + axis[0] * s;
+	mat[2]  = axis[0] * axis[2] * (1 - c) - axis[2] * s;
+	mat[6]  = axis[1] * axis[2] * (1 - c) + axis[0] * s;
 	mat[10] = c + axis[2] * axis[2] * (1 - c);
+}
+
+/*!
+* 回転軸から四元数行列の生成
+* @param[out] quaternion 四元数
+* @param[in] axis 回転軸
+* @param[in] rad 回転角度
+*/
+void createQuaternion(float* quaternion, btVector3 axis, float rad) {
+	// matがちゃんと確保されているかどうかは判定しないので注意
+	float s = sin(rad / 2);
+	float c = cos(rad / 2);
+	quaternion[0] = axis[0] * s;
+	quaternion[1] = axis[1] * s;
+	quaternion[2] = axis[2] * s;
+	quaternion[3] = c;
+}
+
+/*!
+* 四元数行列から回転行列の生成
+* @param[out] mat[16] 回転行列
+* @param[in] axis 回転軸
+* @param[in] s 回転角度
+*/
+void quaternion2rotationMatrix(float* mat, float vx, float vy, float vz, float s) {
+	// matがちゃんと確保されているかどうかは判定しないので注意
+	// 
+	// 平行移動はしない
+	mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0, mat[15] = 1;
+
+	// 回転行列を求める
+	mat[0]  = 1 - 2 * vy * vy - 2 * vz * vz;
+	mat[4]  = 2 * vx * vy - 2 * s * vz;
+	mat[8]  = 2 * vx * vz + 2 * s * vy;
+	mat[1]  = 2 * vx * vy + 2 * s * vz;
+	mat[5]  = 1 - 2 * vx * vx - 2 * vz * vz;
+	mat[9]  = 2 * vy * vz - 2 * s * vx;
+	mat[2]  = 2 * vx * vy - 2 * s * vy;
+	mat[6]  = 2 * vy * vz + 2 * s * vx;
+	mat[10] = 1 - 2 * vx * vx - 2 * vy * vy;
 }
 
 //-----------------------------------------------------------------------------
@@ -205,8 +247,10 @@ void Display(void)
 
 	glPushMatrix();
 	glTranslatef(g_ballpos[0], g_ballpos[1], g_ballpos[2]);
-	float ballRotattionMat[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
-	rotationMatrix(ballRotattionMat, btVector3(1, 0, 1).normalized(), g_ballRotarion);
+	float quartanion[4];
+	createQuaternion(quartanion, btVector3(1, 0, 0).normalized(), g_ballRotarion);
+	float ballRotattionMat[16];
+	quaternion2rotationMatrix(ballRotattionMat, quartanion[0], quartanion[1], quartanion[2], quartanion[3]);
 	glMultMatrixf(ballRotattionMat);
 
 	// 投射オブジェクト
