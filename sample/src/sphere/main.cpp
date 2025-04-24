@@ -15,7 +15,6 @@
 
 #define GL_SILENCE_DEPRECATION	// mac環境でgluを使っている場合の非推奨warningの抑制
 
-
 //-----------------------------------------------------------------------------
 // インクルードファイル
 //-----------------------------------------------------------------------------
@@ -57,9 +56,13 @@ const btVector3 RX_INIT_POS(-1, 0.5, 0);	//!< ボールの初期位置
 
 float g_dt = 0.01;							//!< 時間ステップ幅Δt
 
-// 球
+// 球/立方体
 btVector3 g_ballpos = RX_INIT_POS;			//!< 中心座標
 float g_ballrad = 0.1;						//!< 半径		
+
+// 回転
+float g_ballRotarion = 0;
+float g_ballRotarionSpeed = 3.141592654 / 8; // 回転速度
 
 btVector3 g_vel = btVector3(0, 0, 0);		//!< 速度
 float g_mass = 0.03;						//!< 質量
@@ -72,7 +75,32 @@ btVector3 g_restitutionVec = btVector3(0, 1, 0); //!< 反発係数(3次元) 練�
 btVector3 g_trajectories[MAX_TRAJ];			//!< ボールの軌跡を格納する配列
 int g_num_trajectory = 0;					//!< 格納されたボールの座標の数
 
+//-----------------------------------------------------------------------------
+// 汎用関数
+//-----------------------------------------------------------------------------
+/*!
+* 回転行列の生成
+* @param[out] mat[16] 回転行列
+* @param[in] axis 回転軸
+* @param[in] rad 回転数
+*/
+void rotationMatrix(float* mat, btVector3 axis, float rad) {
+	// matがちゃんと確保されているかどうかは判定しないので注意
+	mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0, mat[15] = 1;
 
+	// 回転行列を求める
+	float c = cos(rad);
+	float s = sin(rad);
+	mat[0] = c + axis[0] * axis[0] * (1 - c);
+	mat[4] = axis[0] * axis[1] * (1 - c) - axis[2] * s;
+	mat[8] = axis[0] * axis[2] * (1 - c) + axis[2] * s;
+	mat[1] = axis[0] * axis[1] * (1 - c) + axis[2] * s;
+	mat[5] = c + axis[1] * axis[1] * (1 - c);
+	mat[9] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
+	mat[2] = axis[0] * axis[2] * (1 - c) - axis[2] * s;
+	mat[6] = axis[1] * axis[2] * (1 - c) + axis[0] * s;
+	mat[10] = c + axis[2] * axis[2] * (1 - c);
+}
 
 //-----------------------------------------------------------------------------
 // アプリケーション制御関数
@@ -109,6 +137,7 @@ void reset(void)
 	g_currentstep = 0;
 	switchanimation(0);
 	g_num_trajectory = 0;
+	g_ballRotarion = 0;
 }
 
 /*!
@@ -176,12 +205,15 @@ void Display(void)
 
 	glPushMatrix();
 	glTranslatef(g_ballpos[0], g_ballpos[1], g_ballpos[2]);
+	float ballRotattionMat[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
+	rotationMatrix(ballRotattionMat, btVector3(1, 0, 1).normalized(), g_ballRotarion);
+	glMultMatrixf(ballRotattionMat);
 
 	// 投射オブジェクト
 	glEnable(GL_LIGHTING);
 	glColor3f(0.1, 0.5, 1.0);
 	glScalef(2*g_ballrad, 2*g_ballrad, 2*g_ballrad);
-	DrawSphereVBO();	// VBOによる球体メッシュ描画
+	DrawCubeVBO();	// VBOによる球体メッシュ描画
 
 	glPopMatrix();
 
@@ -226,6 +258,9 @@ void Timer(void)
 
 		// 位置の更新
 		g_ballpos += g_vel*g_dt;
+
+		// 回転の更新
+		g_ballRotarion += g_ballRotarionSpeed * g_dt;
 
 		// 速度の更新
 		g_vel += btVector3(0, -9.8, 0)*g_dt;
@@ -417,5 +452,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
-
