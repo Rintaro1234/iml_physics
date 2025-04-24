@@ -66,7 +66,8 @@ float g_mass = 0.03;						//!< 質量
 
 btVector3 g_frc = btVector3(3, 0, 0);		//!< 初期外力
 
-float g_restitution = 0.5;					//!< 反発係数
+// float g_restitution = 0.5;					//!< 反発係数
+btVector3 g_restitutionVec = btVector3(0, 1, 0); //!< 反発係数(3次元) 練習課題1-4用
 
 btVector3 g_trajectories[MAX_TRAJ];			//!< ボールの軌跡を格納する配列
 int g_num_trajectory = 0;					//!< 格納されたボールの座標の数
@@ -233,7 +234,7 @@ void Timer(void)
 		// 床面でのバウンド
 		if(g_ballpos[1] < RX_GROUND){
 			// 球の位置と速度を変更
-
+			g_vel[1] = -g_vel[1] * g_restitutionVec[1];
 		}
 
 		g_currentstep++;
