@@ -224,12 +224,12 @@ void Timer(void)
 			g_trajectories[g_num_trajectory++] = g_ballpos;
 
 
-		// 位置の更新
-		g_ballpos += g_vel*g_dt;
-
 		// 速度の更新
+		btVector3 preVel = g_vel;
 		g_vel += btVector3(0, -9.8, 0)*g_dt;
 
+		// 位置の更新
+		g_ballpos += (preVel + g_vel)*g_dt / 2; //2次のルンゲ・クッタ法（改良オイラー法）
 
 		// 床面でのバウンド
 		if(g_ballpos[1] < RX_GROUND){
