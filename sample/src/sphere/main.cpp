@@ -29,6 +29,9 @@
 #include "LinearMath/btQuaternion.h"
 #include "LinearMath/btTransform.h"
 
+// 3x3マトリックスのインクルード
+#include "LinearMath/btMatrix3x3.h"
+
 
 using namespace std;
 
@@ -56,13 +59,17 @@ const btVector3 RX_INIT_POS(-1, 0.5, 0);	//!< ボールの初期位置
 
 float g_dt = 0.01;							//!< 時間ステップ幅Δt
 
-// 球/立方体
-btVector3 g_ballpos = RX_INIT_POS;			//!< 中心座標
-float g_ballrad = 0.1;						//!< 半径		
+// 立方体
+btVector3 g_cubepos = RX_INIT_POS;			//!< 中心座標
+float g_cuberad = 0.1;						//!< 半径		
+float g_cubeMass = 1;						//!< 重さ
 
 // 回転
-float g_ballRotarion = 0;
-float g_ballRotarionSpeed = 3.141592654 / 8; // 回転速度
+//float g_ballRotarion = 0;
+//float g_ballRotarionSpeed = 3.141592654 / 8; // 回転速度
+btVector3 g_ballRotationRotation = btVector3(0, 0, 0);
+// 慣性テンソル
+//btMatrix3x3 g_cubeMOI = btMatrix3x3(g_cubeMOI*(g_cuberad*g_cuberad)/6.0f, 0, 0, );
 
 btVector3 g_vel = btVector3(0, 0, 0);		//!< 速度
 float g_mass = 0.03;						//!< 質量
@@ -174,7 +181,7 @@ void savedisplay(const int &stp)
 */
 void reset(void)
 {
-	g_ballpos = RX_INIT_POS;
+	g_cubepos = RX_INIT_POS;
 	g_vel = btVector3(0, 0, 0);
 	g_currentstep = 0;
 	switchanimation(0);
@@ -246,7 +253,7 @@ void Display(void)
 	glTranslatef(0, 0, -5);	// 視点をz方向に移動
 
 	glPushMatrix();
-	glTranslatef(g_ballpos[0], g_ballpos[1], g_ballpos[2]);
+	glTranslatef(g_cubepos[0], g_cubepos[1], g_cubepos[2]);
 	float quartanion[4];
 	createQuaternion(quartanion, btVector3(1, 0, 0).normalized(), g_ballRotarion);
 	float ballRotattionMat[16];
@@ -256,7 +263,7 @@ void Display(void)
 	// 投射オブジェクト
 	glEnable(GL_LIGHTING);
 	glColor3f(0.1, 0.5, 1.0);
-	glScalef(2*g_ballrad, 2*g_ballrad, 2*g_ballrad);
+	glScalef(2*g_cuberad, 2*g_cuberad, 2*g_cuberad);
 	DrawCubeVBO();	// VBOによる球体メッシュ描画
 
 	glPopMatrix();
@@ -297,7 +304,7 @@ void Timer(void)
 		//  g_num_trajectoryをすでに格納された数とすると...
 		//  (g_num_trajectory >= MAX_TRAJとなったときのエラー処理も忘れずに)
 		if(g_num_trajectory < MAX_TRAJ)
-			g_trajectories[g_num_trajectory++] = g_ballpos;
+			g_trajectories[g_num_trajectory++] = g_cubepos;
 
 
 		// 速度の更新
@@ -309,7 +316,7 @@ void Timer(void)
 		btVector3 k4 = k1;
 
 		// 位置の更新
-		g_ballpos += (k1 + 2 * k2 + 2 * k3 + k4) / 6; //4次のルンゲ・クッタ法（改良オイラー法）
+		g_cubepos += (k1 + 2 * k2 + 2 * k3 + k4) / 6; //4次のルンゲ・クッタ法（改良オイラー法）
 
 		// 回転の更新
 		g_ballRotarion += g_ballRotarionSpeed * g_dt;
@@ -318,7 +325,7 @@ void Timer(void)
 		g_vel += btVector3(0, -9.8, 0) * g_dt;
 
 		// 床面でのバウンド
-		if(g_ballpos[1] < RX_GROUND){
+		if(g_cubepos[1] < RX_GROUND){
 			// 球の位置と速度を変更
 			g_vel[1] = -g_vel[1] * g_restitutionVec[1];
 		}
