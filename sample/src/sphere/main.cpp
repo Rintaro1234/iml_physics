@@ -300,15 +300,22 @@ void Timer(void)
 			g_trajectories[g_num_trajectory++] = g_ballpos;
 
 
+		// 速度の更新
+		// 北大の資料(https://www.eng.hokudai.ac.jp/labo/lmsm/jikken/text/computer/deqs.pdf)と合わせると
+		// f = v(t)のこと
+		btVector3 k1 = g_vel * g_dt;
+		btVector3 k2 = (g_vel + btVector3(0, -9.8, 0) * (g_dt * 0.5)) * g_dt;
+		btVector3 k3 = k2;
+		btVector3 k4 = k1;
+
 		// 位置の更新
-		g_ballpos += g_vel*g_dt;
+		g_ballpos += (k1 + 2 * k2 + 2 * k3 + k4) / 6; //4次のルンゲ・クッタ法（改良オイラー法）
 
 		// 回転の更新
 		g_ballRotarion += g_ballRotarionSpeed * g_dt;
 
 		// 速度の更新
-		g_vel += btVector3(0, -9.8, 0)*g_dt;
-
+		g_vel += btVector3(0, -9.8, 0) * g_dt;
 
 		// 床面でのバウンド
 		if(g_ballpos[1] < RX_GROUND){
