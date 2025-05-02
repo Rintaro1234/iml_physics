@@ -225,16 +225,18 @@ void Timer(void)
 
 
 		// 速度の更新
-		btVector3 k1 = g_vel;
-		btVector3 k2 = k1 + btVector3(0, -9.8, 0) * g_dt * 0.25;
-		btVector3 k3 = k2 + btVector3(0, -9.8, 0) * g_dt * 0.25;
-		btVector3 k4 = k3 + btVector3(0, -9.8, 0) * g_dt * 0.25;
+		// 北大の資料(https://www.eng.hokudai.ac.jp/labo/lmsm/jikken/text/computer/deqs.pdf)と合わせると
+		// f = v(t)のこと
+		btVector3 k1 = g_vel * g_dt;
+		btVector3 k2 = (g_vel + btVector3(0, -9.8, 0) * (g_dt * 0.5)) * g_dt;
+		btVector3 k3 = k2;
+		btVector3 k4 = k1;
 
 		// 位置の更新
-		g_ballpos += (k1 + 2 * k2 + 2 * k3 + k4) * g_dt / 8; //2次のルンゲ・クッタ法（改良オイラー法）
+		g_ballpos += (k1 + 2 * k2 + 2 * k3 + k4) * g_dt / 6; //4次のルンゲ・クッタ法（改良オイラー法）
 
 		// 速度の更新
-		g_vel = k4 + btVector3(0, -9.8, 0) * g_dt * 0.25;
+		g_vel += btVector3(0, -9.8, 0) * g_dt;
 
 		// 床面でのバウンド
 		if(g_ballpos[1] < RX_GROUND){
