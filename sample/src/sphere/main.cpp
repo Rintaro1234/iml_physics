@@ -233,7 +233,7 @@ void Timer(void)
 		btVector3 k4 = k1;
 
 		// 位置の更新
-		g_ballpos += (k1 + 2 * k2 + 2 * k3 + k4) * g_dt / 6; //4次のルンゲ・クッタ法（改良オイラー法）
+		g_ballpos += (k1 + 2 * k2 + 2 * k3 + k4) / 6; //4次のルンゲ・クッタ法（改良オイラー法）
 
 		// 速度の更新
 		g_vel += btVector3(0, -9.8, 0) * g_dt;
