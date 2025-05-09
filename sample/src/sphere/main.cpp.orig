@@ -64,14 +64,12 @@ btVector3 g_cubepos = RX_INIT_POS;			//!< 中心座標
 float g_cuberad = 0.1;						//!< 半径		
 float g_cubeMass = 1;						//!< 重さ
 
-// 慣性モーメント
-double oneAxisMOI = (g_cuberad * g_cuberad) / 6.0f;
-btMatrix3x3 g_cubeMOI = btMatrix3x3(oneAxisMOI, 0, 0,
-									0, oneAxisMOI, 0,
-									0, 0, oneAxisMOI);
-btVector4 g_cubeRotation = btVector4(0, 0, 0, 1); // 四元数
-btVector3 g_cubeRotationSpeed;
-btVector3 g_cubeRotationAcc;
+// 回転
+//float g_ballRotarion = 0;
+//float g_ballRotarionSpeed = 3.141592654 / 8; // 回転速度
+btVector3 g_ballRotationRotation = btVector3(0, 0, 0);
+// 慣性テンソル
+//btMatrix3x3 g_cubeMOI = btMatrix3x3(g_cubeMOI*(g_cuberad*g_cuberad)/6.0f, 0, 0, );
 
 btVector3 g_vel = btVector3(0, 0, 0);		//!< 速度
 float g_mass = 0.03;						//!< 質量
@@ -119,29 +117,14 @@ void rotationMatrix(float* mat, btVector3 axis, float rad) {
 * @param[in] axis 回転軸
 * @param[in] rad 回転角度
 */
-void createQuaternion(float *quaternion, btVector3 axis, float rad) {
-	// quaternionがちゃんと確保されているかどうかは判定しないので注意
+void createQuaternion(float* quaternion, btVector3 axis, float rad) {
+	// matがちゃんと確保されているかどうかは判定しないので注意
 	float s = sin(rad / 2);
 	float c = cos(rad / 2);
 	quaternion[0] = axis[0] * s;
 	quaternion[1] = axis[1] * s;
 	quaternion[2] = axis[2] * s;
 	quaternion[3] = c;
-}
-
-/*!
-* 回転軸から四元数行列の生成
-* @param[out] quaternion 四元数
-* @param[in] rad 回転角度(3次元)
-*/
-void createQuaternion(btVector4& quaternion, btVector3 rad) {
-	float alpha = rad[0] / 2;
-	float beta = rad[1] / 2;
-	float gamma = rad[2] / 2;
-	quaternion[0] = sin(alpha) * cos(beta) * cos(gamma) - cos(alpha) * sin(beta) * sin(gamma);
-	quaternion[1] = cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * cos(beta) * sin(gamma);
-	quaternion[2] = cos(alpha) * cos(beta) * sin(gamma) - sin(alpha) * sin(beta) * cos(gamma);
-	quaternion[3] = cos(alpha) * cos(beta) * cos(gamma) + sin(alpha) * sin(beta) * sin(gamma);
 }
 
 /*!
@@ -166,24 +149,6 @@ void quaternion2rotationMatrix(float* mat, float vx, float vy, float vz, float s
 	mat[2]  = 2 * vx * vy - 2 * s * vy;
 	mat[6]  = 2 * vy * vz + 2 * s * vx;
 	mat[10] = 1 - 2 * vx * vx - 2 * vy * vy;
-}
-
-btVector4 multiQuaternion(btVector4 a, btVector4 b) {
-	btVector3 a_axis = btVector3(a[0], a[1], a[2]);
-	double a_scalar = a[3];
-	btVector3 b_axis = btVector3(b[0], b[1], b[2]);
-	double b_scalar = b[3];
-	
-	btVector3 cross = a_axis.cross(b_axis);
-	double dot = a_axis.dot(b_axis);
-
-	btVector4 c;
-	c[0] = a_scalar * b_axis[0] + b_scalar * a_axis[0] + cross[0];
-	c[1] = a_scalar * b_axis[1] + b_scalar * a_axis[1] + cross[1];
-	c[2] = a_scalar * b_axis[2] + b_scalar * a_axis[2] + cross[2];
-	c[3] = a_scalar * b_scalar - dot;
-
-	return c;
 }
 
 //-----------------------------------------------------------------------------
@@ -221,8 +186,7 @@ void reset(void)
 	g_currentstep = 0;
 	switchanimation(0);
 	g_num_trajectory = 0;
-	g_cubeRotation = btVector4(0, 0, 0, 1);
-	g_cubeRotationSpeed = g_cubeRotationAcc = btVector3(0, 0, 0);
+	g_ballRotarion = 0;
 }
 
 /*!
@@ -290,8 +254,10 @@ void Display(void)
 
 	glPushMatrix();
 	glTranslatef(g_cubepos[0], g_cubepos[1], g_cubepos[2]);
+	float quartanion[4];
+	createQuaternion(quartanion, btVector3(1, 0, 0).normalized(), g_ballRotarion);
 	float ballRotattionMat[16];
-	quaternion2rotationMatrix(ballRotattionMat, g_cubeRotation[0], g_cubeRotation[1], g_cubeRotation[2], g_cubeRotation[3]);
+	quaternion2rotationMatrix(ballRotattionMat, quartanion[0], quartanion[1], quartanion[2], quartanion[3]);
 	glMultMatrixf(ballRotattionMat);
 
 	// 投射オブジェクト
@@ -331,11 +297,6 @@ void Timer(void)
 			// 初期速度
 			btVector3 acc = g_frc/g_mass;
 			g_vel += acc*g_dt;
-
-			// 初期トルク
-			btVector3 rotationTorque = btVector3(0.0, 1.0, 1.0);
-			g_cubeRotationAcc = g_cubeMOI.inverse() * rotationTorque; // 初期加速度
-			g_cubeRotationSpeed = g_cubeRotationAcc * g_dt; // 初期回転速度
 		}
 
 		// 球の軌跡の格納
@@ -355,12 +316,14 @@ void Timer(void)
 		btVector3 k4 = k1;
 
 		// 位置の更新
-		g_cubepos += (k1 + 2 * k2 + 2 * k3 + k4) / 6; //4次のルンゲ・クッタ法（改良オイラー法）
+<<<<<<< HEAD
+		g_ballpos += (k1 + 2 * k2 + 2 * k3 + k4) / 6; //4次のルンゲ・クッタ法（改良オイラー法）
+=======
+		g_cubepos += g_vel*g_dt;
+>>>>>>> e828ff3 ([wip][ex1-7]退避用1)
 
 		// 回転の更新
-		btVector4 deltaCubeRotation;
-		createQuaternion(deltaCubeRotation, g_cubeRotationSpeed * g_dt);
-		g_cubeRotation = multiQuaternion(deltaCubeRotation, g_cubeRotation);
+		g_ballRotarion += g_ballRotarionSpeed * g_dt;
 
 		// 速度の更新
 		g_vel += btVector3(0, -9.8, 0) * g_dt;
@@ -450,6 +413,8 @@ void SetImGUI(GLFWwindow* window)
 void Clean()
 {
 }
+
+
 
 
 /*!
