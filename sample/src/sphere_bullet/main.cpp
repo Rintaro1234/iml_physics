@@ -40,6 +40,7 @@ using namespace std;
 
 // BULLET
 btDynamicsWorld* g_dynamicsworld = 0;	//!< Bulletワールド
+btRigidBody* g_PlaneTerrain = 0; //!< 地面
 btRigidBody* g_ballbody = 0;		//!< 球体
 
 // 光源位置/色 (shadow mapなどで使う場合用にグローバル変数にしている)
@@ -63,18 +64,17 @@ const btVector3 RX_INIT_POS(-1, 0.5, 0);	//!< ボールの初期位置
 float g_dt = 0.01;							//!< 時間ステップ幅Δt
 
 // 球
-btVector3 g_ballpos = RX_INIT_POS;			//!< 中心座標
 float g_ballrad = 0.1;						//!< 半径		
-
-btVector3 g_vel = btVector3(0, 0, 0);		//!< 速度
-float g_mass = 0.03;						//!< 質量
 
 btVector3 g_frc = btVector3(3, 0, 0);		//!< 初期外力
 
-float g_restitution = 0.5;					//!< 反発係数
+float g_ball_restitution = 0.8;					//!< 反発係数(ボール)
 
 btVector3 g_trajectories[MAX_TRAJ];			//!< ボールの軌跡を格納する配列
 int g_num_trajectory = 0;					//!< 格納されたボールの座標の数
+
+// 地面
+float g_plane_restitution = 0.7; //!< 反発係数（地面）
 
 
 
@@ -108,8 +108,11 @@ void savedisplay(const int& stp)
 */
 void reset(void)
 {
-	g_ballpos = RX_INIT_POS;
-	g_vel = btVector3(0, 0, 0);
+	// 姿勢の初期化
+	btVector3 pos = RX_INIT_POS; //!< 中心座標
+	btQuaternion qrot(0, 0, 0, 1); //!< 回転
+	btDefaultMotionState* motion_state = new btDefaultMotionState(btTransform(qrot, pos));
+	g_ballbody->setMotionState(motion_state);
 	g_currentstep = 0;
 	switchanimation(0);
 	g_num_trajectory = 0;
@@ -121,11 +124,6 @@ void reset(void)
 */
 void InitBullet(void)
 {
-	// 剛体の宣言
-	btVector3 pos = btVector3(-1, 0.5, 0); //!< 中心座標
-	btScalar mass = 0.03; //!< 質量
-	btScalar restitution = 0.8; //!< 反発係数
-
 	// 衝突検出の選択
 	btDefaultCollisionConfiguration* config = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(config);
@@ -140,11 +138,27 @@ void InitBullet(void)
 	g_dynamicsworld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
 	g_dynamicsworld->setGravity(btVector3(0, -9.8, 0));
 
-	// 球体計上を設定
+	// 地面の生成
+	// 地面の形状を設定
+	btStaticPlaneShape* terrain_shape = new btStaticPlaneShape(btVector3(0, 1, 0), RX_GROUND);
+	// 地面の初期位置・姿勢
+	btDefaultMotionState* terrain_motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0), btVector3(0, 0, 0)));
+	// 地面の剛体の作成
+	g_PlaneTerrain = new btRigidBody(0, terrain_motion_state, terrain_shape, btVector3(0, 0, 0));
+	// 反発係数
+	g_PlaneTerrain->setRestitution(g_plane_restitution);
+	// ワールドに地面の剛体を追加
+	g_dynamicsworld->addRigidBody(g_PlaneTerrain);
+
+	// 球体形状を設定
 	btCollisionShape* sphere_shape = new btSphereShape(g_ballrad);
 
+	// 剛体の宣言
+	btVector3 pos = RX_INIT_POS; //!< 中心座標
+	btQuaternion qrot(0, 0, 0, 1); //!< 回転
+	btScalar mass = 0.03; //!< 質量
+
 	// 球体の初期位置・姿勢
-	btQuaternion qrot(0, 0, 0, 1);
 	btDefaultMotionState* motion_state = new btDefaultMotionState(btTransform(qrot, pos));
 
 	//慣性モーメントの計算
@@ -153,6 +167,9 @@ void InitBullet(void)
 
 	// 剛体オブジェクトの生成(質量、位置姿勢、形状、　慣性モーメント)
 	g_ballbody = new btRigidBody(mass, motion_state, sphere_shape, inertia);
+
+	// 反発係数
+	g_ballbody->setRestitution(g_ball_restitution);
 
 	// ワールドに剛体オブジェクトを追加
 	g_dynamicsworld->addRigidBody(g_ballbody);
@@ -217,7 +234,11 @@ void Display(void)
 	// ビューポート,透視変換行列,モデルビュー変換行列の設定
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glm::mat4 mp = glm::perspective(45.0f, (float)g_winw / g_winh, 0.01f, 20.0f);
+	float fovy = 45.0f;
+	float aspect = (float)g_winw / g_winh;
+	float znear = 0.01f;
+	float zfar = 20.0f;
+	glm::mat4 mp = glm::perspective(fovy, aspect, znear, zfar);
 	glMultMatrixf(glm::value_ptr(mp));
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -228,27 +249,47 @@ void Display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glPushMatrix();
-	glTranslatef(0, 0, -5);	// 視点をz方向に移動
 
-	glPushMatrix();
-	btVector3 pos = g_ballbody->getCenterOfMassPosition();
-	glTranslatef(pos[0], pos[1], pos[2]);
+		// 地面の描画
+		glPushMatrix();
+			const btStaticPlaneShape* planeShape = static_cast<const btStaticPlaneShape*>(g_PlaneTerrain->getCollisionShape());
+			btVector3 planeNorm = planeShape->getPlaneNormal();
+			float planeCons = planeShape->getPlaneConstant();
+			float farX = aspect * (zfar * sin(fovy / 2 * 3.141592654 / 180)) + 1.0f;
+			float nearX = aspect * (znear * sin(fovy / 2 * 3.141592654 / 180)) + 1.0f;
+			float rightFarY = (-zfar * planeNorm[2] - planeNorm[0] * farX + planeCons) / planeNorm[1];
+			float leftFarY = (-zfar * planeNorm[2] + planeNorm[0] * farX + planeCons) / planeNorm[1];
+			float rightNearY = (-znear * planeNorm[2] - planeNorm[0] * nearX + planeCons) / planeNorm[1];
+			float leftNearY = (-znear * planeNorm[2] + planeNorm[0] * nearX + planeCons) / planeNorm[1];
 
-	// 投射オブジェクト
-	glEnable(GL_LIGHTING);
-	glColor3f(0.1, 0.5, 1.0);
-	glScalef(2 * g_ballrad, 2 * g_ballrad, 2 * g_ballrad);
-	DrawSphereVBO();	// VBOによる球体メッシュ描画
+			glEnable(GL_LIGHTING);
+			glBegin(GL_POLYGON);
+			glVertex3f(farX, rightFarY, -zfar);
+			glVertex3f(-farX, leftFarY, -zfar);
+			glVertex3f(-nearX, leftNearY, -znear);
+			glVertex3f(nearX, rightNearY, -znear);
+			glEnd();
+		glPopMatrix();
 
-	glPopMatrix();
+		glTranslatef(0, 0, -5);	// 視点をz方向に移動
+		
+		// 球体の描画
+		glPushMatrix();
+			btVector3 pos = g_ballbody->getCenterOfMassPosition();
+			glTranslatef(pos[0], pos[1], pos[2]);
+			// 投射オブジェクト
+			glEnable(GL_LIGHTING);
+			glColor3f(0.1, 0.5, 1.0);
+			glScalef(2 * g_ballrad, 2 * g_ballrad, 2 * g_ballrad);
+			DrawSphereVBO();	// VBOによる球体メッシュ描画
+		glPopMatrix();
 
-
-	// 軌跡
-	if (g_num_trajectory) {
-		// ボールの中心座標の軌跡の描画
-		// GL_LINE_STRIPを使ってみよう
-		glDisable(GL_LIGHTING);
-	}
+		// 軌跡
+		if (g_num_trajectory) {
+			// ボールの中心座標の軌跡の描画
+			// GL_LINE_STRIPを使ってみよう
+			glDisable(GL_LIGHTING);
+		}
 
 	glPopMatrix();
 }
