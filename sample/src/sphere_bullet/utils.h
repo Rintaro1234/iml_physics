@@ -86,26 +86,26 @@ const double RX_RADIANS_TO_DEGREES = 57.295779513082320876798154814114;	//! radi
 
 //! 許容誤差を含めた等値判定
 template<class T>
-inline bool RX_FEQ(const T &a, const T &b){ return (fabs(a-b) < RX_FEQ_EPS); }
+inline bool RX_FEQ(const T& a, const T& b) { return (fabs(a - b) < RX_FEQ_EPS); }
 
 //! 値のクランプ(クランプした値を返す)
 template<class T>
-inline T RX_CLAMP(const T &x, const T &a, const T &b){ return ((x < a) ? a : (x > b) ? b : x); }
+inline T RX_CLAMP(const T& x, const T& a, const T& b) { return ((x < a) ? a : (x > b) ? b : x); }
 
 //! 1次元線型補間
 template<class T>
-inline T RX_LERP(const T &a, const T &b, const T &t){ return a + t*(b-a); }
+inline T RX_LERP(const T& a, const T& b, const T& t) { return a + t * (b - a); }
 
 //! 乱数
-inline double RX_RAND(const double &_min, const double &_max){ return (_max-_min)*(double(rand())/(1.0+RAND_MAX))+_min; }
+inline double RX_RAND(const double& _min, const double& _max) { return (_max - _min) * (double(rand()) / (1.0 + RAND_MAX)) + _min; }
 
 //! 最小値判定(3値)
-template<class T> 
-inline T RX_MIN3(const T &a, const T &b, const T &c){ return ( (a < b) ? ( (a < c) ? a : c) : ( (b < c) ? b : c)); }
+template<class T>
+inline T RX_MIN3(const T& a, const T& b, const T& c) { return ((a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c)); }
 
 //! スワップ
 template<class T>
-inline void RX_SWAP(T &a, T &b){ T c; c = a; a = b; b = c; }
+inline void RX_SWAP(T& a, T& b) { T c; c = a; a = b; b = c; }
 
 
 /*!
@@ -129,37 +129,37 @@ static inline void glfw_error_callback(int error, const char* description)
 * @param[out] nvrts,ntris 生成したメッシュの頂点数とポリゴン数を返す
 * @param[in] len 辺の長さ
 */
-static inline int MakeCube(int &nvrts, vector<glm::vec3> &vrts, vector<glm::vec3> &nrms, int &ntris, vector<int> &tris,
+static inline int MakeCube(int& nvrts, vector<glm::vec3>& vrts, vector<glm::vec3>& nrms, int& ntris, vector<int>& tris,
 	float len)
 {
 	nvrts = 0; ntris = 0;
 	vrts.clear(); nrms.clear(); tris.clear();
 
 	// 頂点座標
-	float sl = 0.5f*len;	// 辺の長さの半分
+	float sl = 0.5f * len;	// 辺の長さの半分
 	vrts.push_back(glm::vec3(-sl, -sl, -sl));
-	vrts.push_back(glm::vec3( sl, -sl, -sl));
-	vrts.push_back(glm::vec3( sl, -sl,  sl));
-	vrts.push_back(glm::vec3(-sl, -sl,  sl));
-	vrts.push_back(glm::vec3(-sl,  sl, -sl));
-	vrts.push_back(glm::vec3( sl,  sl, -sl));
-	vrts.push_back(glm::vec3( sl,  sl,  sl));
-	vrts.push_back(glm::vec3(-sl,  sl,  sl));
+	vrts.push_back(glm::vec3(sl, -sl, -sl));
+	vrts.push_back(glm::vec3(sl, -sl, sl));
+	vrts.push_back(glm::vec3(-sl, -sl, sl));
+	vrts.push_back(glm::vec3(-sl, sl, -sl));
+	vrts.push_back(glm::vec3(sl, sl, -sl));
+	vrts.push_back(glm::vec3(sl, sl, sl));
+	vrts.push_back(glm::vec3(-sl, sl, sl));
 	nvrts = static_cast<int>(vrts.size());
 
 	// 頂点法線
-	for(const glm::vec3 &v : vrts){
+	for (const glm::vec3& v : vrts) {
 		nrms.push_back(glm::normalize(v));
 	}
 
 	// 四角形メッシュ作成
 	int f[6][4] = { {0,1,2,3}, {4,7,6,5}, {0,3,7,4}, {1,5,6,2}, {0,4,5,1}, {3,2,6,7} };
-	for(int j = 0; j < 6; ++j){
-		for(int i = 0; i < 4; ++i){
+	for (int j = 0; j < 6; ++j) {
+		for (int i = 0; i < 4; ++i) {
 			tris.push_back(f[j][i]);
 		}
 	}
-	ntris = static_cast<int>(tris.size()/4);
+	ntris = static_cast<int>(tris.size() / 4);
 
 	return 1;
 }
@@ -171,43 +171,43 @@ static inline int MakeCube(int &nvrts, vector<glm::vec3> &vrts, vector<glm::vec3
 * @param[out] nvrts,ntris 生成したメッシュの頂点数とポリゴン数を返す
 * @param[in] len 辺の長さ
 */
-static inline int MakeCubeWithFaceNormal(int &nvrts, vector<glm::vec3> &vrts, vector<glm::vec3> &nrms, int &ntris, vector<int> &tris,
+static inline int MakeCubeWithFaceNormal(int& nvrts, vector<glm::vec3>& vrts, vector<glm::vec3>& nrms, int& ntris, vector<int>& tris,
 	float len)
 {
 	nvrts = 0; ntris = 0;
 	vrts.clear(); nrms.clear(); tris.clear();
 
-	nvrts = 6*4;
+	nvrts = 6 * 4;
 	ntris = 6;
 	int f[6][4] = { {0,1,2,3}, {4,7,6,5}, {0,3,7,4}, {1,5,6,2}, {0,4,5,1}, {3,2,6,7} };
 
 	// 頂点座標
-	float sl = 0.5f*len;	// 辺の長さの半分
+	float sl = 0.5f * len;	// 辺の長さの半分
 	vector<glm::vec3> v0(8);
 	v0[0] = glm::vec3(-sl, -sl, -sl);
-	v0[1] = glm::vec3( sl, -sl, -sl);
-	v0[2] = glm::vec3( sl, -sl,  sl);
-	v0[3] = glm::vec3(-sl, -sl,  sl);
-	v0[4] = glm::vec3(-sl,  sl, -sl);
-	v0[5] = glm::vec3( sl,  sl, -sl);
-	v0[6] = glm::vec3( sl,  sl,  sl);
-	v0[7] = glm::vec3(-sl,  sl,  sl);
-	
+	v0[1] = glm::vec3(sl, -sl, -sl);
+	v0[2] = glm::vec3(sl, -sl, sl);
+	v0[3] = glm::vec3(-sl, -sl, sl);
+	v0[4] = glm::vec3(-sl, sl, -sl);
+	v0[5] = glm::vec3(sl, sl, -sl);
+	v0[6] = glm::vec3(sl, sl, sl);
+	v0[7] = glm::vec3(-sl, sl, sl);
+
 	// 頂点法線
 	vector<glm::vec3> n0(6);
 	n0[0] = glm::vec3(0, -1, 0);
-	n0[1] = glm::vec3(0,  1, 0);
+	n0[1] = glm::vec3(0, 1, 0);
 	n0[2] = glm::vec3(-1, 0, 0);
-	n0[3] = glm::vec3( 1, 0, 0);
+	n0[3] = glm::vec3(1, 0, 0);
 	n0[4] = glm::vec3(0, 0, -1);
-	n0[5] = glm::vec3(0, 0,  1);
+	n0[5] = glm::vec3(0, 0, 1);
 
 	vrts.resize(nvrts);
 	nrms.resize(nvrts);
-	tris.resize(ntris*4);
-	for(int j = 0; j < 6; ++j){
-		for(int i = 0; i < 4; ++i){
-			int idx = i+4*j;
+	tris.resize(ntris * 4);
+	for (int j = 0; j < 6; ++j) {
+		for (int i = 0; i < 4; ++i) {
+			int idx = i + 4 * j;
 			vrts[idx] = (v0[f[j][i]]);
 			nrms[idx] = n0[j];
 			tris[idx] = idx;
@@ -223,8 +223,8 @@ static inline int MakeCubeWithFaceNormal(int &nvrts, vector<glm::vec3> &vrts, ve
 * @param[out] nvrts,ntris 生成したメッシュの頂点数とポリゴン数を返す
 * @param[in] len 辺の長さ
 */
-static inline int MakePlaneY(int &nvrts, vector<glm::vec3> &vrts, vector<glm::vec3> &nrms, int &ntris, vector<int> &tris,
-	vector<glm::vec2> &texcoords, float len)
+static inline int MakePlaneY(int& nvrts, vector<glm::vec3>& vrts, vector<glm::vec3>& nrms, int& ntris, vector<int>& tris,
+	vector<glm::vec2>& texcoords, float len)
 {
 	nvrts = 0; ntris = 0;
 	vrts.clear(); nrms.clear(); tris.clear();
@@ -233,13 +233,13 @@ static inline int MakePlaneY(int &nvrts, vector<glm::vec3> &vrts, vector<glm::ve
 	ntris = 1;
 
 	// 頂点座標
-	float sl = 0.5f*len;	// 辺の長さの半分
+	float sl = 0.5f * len;	// 辺の長さの半分
 	vrts.resize(4);
 	vrts[0] = glm::vec3(-sl, 0, -sl);
-	vrts[1] = glm::vec3(-sl, 0,  sl);
-	vrts[2] = glm::vec3( sl, 0,  sl);
-	vrts[3] = glm::vec3( sl, 0, -sl);
-	
+	vrts[1] = glm::vec3(-sl, 0, sl);
+	vrts[2] = glm::vec3(sl, 0, sl);
+	vrts[3] = glm::vec3(sl, 0, -sl);
+
 	// 頂点法線
 	nrms.resize(4);
 	nrms[0] = glm::vec3(0, 1, 0);
@@ -256,7 +256,7 @@ static inline int MakePlaneY(int &nvrts, vector<glm::vec3> &vrts, vector<glm::ve
 
 	// メッシュ頂点インデックス
 	tris.resize(4);
-	for(int i = 0; i < 4; ++i) tris[i] = i;
+	for (int i = 0; i < 4; ++i) tris[i] = i;
 
 	return 1;
 }
@@ -268,7 +268,7 @@ static inline int MakePlaneY(int &nvrts, vector<glm::vec3> &vrts, vector<glm::ve
 * @param[in] rad 球の半径
 * @param[in] slices,stacks 緯度方向(360度)と傾度方向(180度)のポリゴン分割数
 */
-static inline int MakeSphere(int &nvrts, vector<glm::vec3> &vrts, vector<glm::vec3> &nrms, int &ntris, vector<int> &tris,
+static inline int MakeSphere(int& nvrts, vector<glm::vec3>& vrts, vector<glm::vec3>& nrms, int& ntris, vector<int>& tris,
 	float rad, int slices = 16, int stacks = 8)
 {
 	const float pi = glm::pi<float>();
@@ -278,33 +278,33 @@ static inline int MakeSphere(int &nvrts, vector<glm::vec3> &vrts, vector<glm::ve
 	nrms.clear();
 	tris.clear();
 
-	for(int j = 0; j <= stacks; ++j){
-		float t = float(j)/float(stacks);
-		float y = rad*cos(pi*t);
-		float rj = rad*sin(pi*t);	// 高さyでの球の断面円半径
-		for(int i = 0; i <= slices; ++i){
-			float s = float(i)/float(slices);
-			float x = rj*sin(2*pi*s);
-			float z = rj*cos(2*pi*s);
+	for (int j = 0; j <= stacks; ++j) {
+		float t = float(j) / float(stacks);
+		float y = rad * cos(pi * t);
+		float rj = rad * sin(pi * t);	// 高さyでの球の断面円半径
+		for (int i = 0; i <= slices; ++i) {
+			float s = float(i) / float(slices);
+			float x = rj * sin(2 * pi * s);
+			float z = rj * cos(2 * pi * s);
 			vrts.push_back(glm::vec3(x, y, z));
 			nrms.push_back(glm::normalize(glm::vec3(x, y, z)));
 		}
 	}
 	nvrts = static_cast<int>(vrts.size());
 	// メッシュ作成
-	int nx = slices+1;
-	for(int j = 0; j < stacks; ++j){
-		for(int i = 0; i < slices; ++i){
+	int nx = slices + 1;
+	for (int j = 0; j < stacks; ++j) {
+		for (int i = 0; i < slices; ++i) {
 			tris.push_back((i)+(j)*nx);
-			tris.push_back((i+1)+(j+1)*nx);
-			tris.push_back((i+1)+(j)*nx);
+			tris.push_back((i + 1) + (j + 1) * nx);
+			tris.push_back((i + 1) + (j)*nx);
 
 			tris.push_back((i)+(j)*nx);
-			tris.push_back((i)+(j+1)*nx);
-			tris.push_back((i+1)+(j+1)*nx);
+			tris.push_back((i)+(j + 1) * nx);
+			tris.push_back((i + 1) + (j + 1) * nx);
 		}
 	}
-	ntris = static_cast<int>(tris.size()/3);
+	ntris = static_cast<int>(tris.size() / 3);
 
 	return 1;
 }
@@ -313,38 +313,81 @@ static inline int MakeSphere(int &nvrts, vector<glm::vec3> &vrts, vector<glm::ve
 * 円筒形状のポリゴンメッシュを生成してVAOとして登録
 * - 円筒の中心は原点(0,0,0)
 * - 円筒の軸方向はz軸方向(0,0,1) - gluCylinderに合わせている
+* - 法線を別にするために側面と端面の頂点を別にしている
 * @param[out] nvrts,ntris 生成したメッシュの頂点数とポリゴン数を返す
 * @param[in] rad,len 円筒の半径と長さ
 * @param[in] slices 円筒の円に沿ったポリゴン分割数
 */
-static inline int MakeCylinder(int &nvrts, vector<glm::vec3> &vrts, vector<glm::vec3> &nrms, int &ntris, vector<int> &tris,
-	float rad, float len, int slices = 16, int stacks = 8)
+static inline int MakeCylinder(int& nvrts, vector<glm::vec3>& vrts, vector<glm::vec3>& nrms, int& ntris, vector<int>& tris,
+	float rad1, float rad2, float len, int slices = 16, bool disk = true)
 {
 	const float pi = glm::pi<float>();
 
-	for(int i = 0; i <= slices; ++i){
-		float t = float(i)/float(slices);
-		float x = rad*cos(2*pi*t);
-		float y = rad*sin(2*pi*t);
-		vrts.push_back(glm::vec3(x, y, -0.5*len));
-		nrms.push_back(glm::normalize(glm::vec3(x, y, 0.0)));
-		vrts.push_back(glm::vec3(x, y, 0.5*len));
-		nrms.push_back(glm::normalize(glm::vec3(x, y, 0.0)));
-
+	// 側面用頂点
+	for (int i = 0; i <= slices; ++i) {
+		float t = float(i) / float(slices);
+		float x1 = rad1 * cos(2 * pi * t);
+		float y1 = rad1 * sin(2 * pi * t);
+		float x2 = rad2 * cos(2 * pi * t);
+		float y2 = rad2 * sin(2 * pi * t);
+		vrts.push_back(glm::vec3(x1, y1, -0.5 * len));
+		vrts.push_back(glm::vec3(x2, y2, 0.5 * len));
+		glm::vec3 n = glm::vec3(x1, y1, 0.0);
+		if (rad1 < 1e-6) n = glm::vec3(x2, y2, 0.0);
+		if (rad1 > rad2) {
+			float l = glm::length(n);
+			n += l * (rad1 - rad2) / len * glm::vec3(0, 0, 1);
+		}
+		else if (rad1 < rad2) {
+			float l = glm::length(n);
+			n += l * (rad2 - rad1) / len * glm::vec3(0, 0, -1);
+		}
+		if (glm::length2(n) > 1e-6) n = glm::normalize(n);
+		nrms.push_back(n); nrms.push_back(n);
 	}
-	nvrts = static_cast<int>(vrts.size());
+	// 端面用頂点(座標値は↑と同じだが法線が異なる)
+	int voffset = vrts.size();
+	for (int i = 0; i <= slices; ++i) {
+		vrts.push_back(vrts[2 * i]);
+		nrms.push_back(glm::vec3(0.0, 0.0, -1.0));
+		vrts.push_back(vrts[2 * i + 1]);
+		nrms.push_back(glm::vec3(0.0, 0.0, 1.0));
+	}
 
 	// メッシュ作成
-	for(int i = 0; i < 2*slices; i += 2){
+	for (int i = 0; i < 2 * slices; i += 2) {
 		tris.push_back(i);
-		tris.push_back((i+2 >= 2*slices ? 0 : i+2));
-		tris.push_back(i+1);
+		tris.push_back((i + 2 >= 2 * slices ? 0 : i + 2));
+		tris.push_back(i + 1);
 
-		tris.push_back(i+1);
-		tris.push_back((i+2 >= 2*slices ? 0 : i+2));
-		tris.push_back((i+2 >= 2*slices ? 1 : i+3));
+		tris.push_back(i + 1);
+		tris.push_back((i + 2 >= 2 * slices ? 0 : i + 2));
+		tris.push_back((i + 2 >= 2 * slices ? 1 : i + 3));
 	}
-	ntris = static_cast<int>(tris.size()/3);
+
+	// 両端面にポリゴンを貼る
+	if (disk) {
+		// 端面中心頂点
+		vrts.push_back(glm::vec3(0, 0, -0.5 * len));
+		nrms.push_back(glm::normalize(glm::vec3(0, 0, -1)));
+		int c1 = vrts.size() - 1;
+		vrts.push_back(glm::vec3(0, 0, 0.5 * len));
+		nrms.push_back(glm::normalize(glm::vec3(0, 0, 1)));
+		int c2 = vrts.size() - 1;
+
+		for (int i = 0; i < slices; ++i) {
+			tris.push_back(c1);
+			tris.push_back(2 * i + voffset);
+			tris.push_back((i == slices - 1 ? 0 : 2 * i + 2) + voffset);
+
+			tris.push_back(c2);
+			tris.push_back(2 * i + 1 + voffset);
+			tris.push_back((i == slices - 1 ? 1 : 2 * i + 3) + voffset);
+		}
+	}
+
+	nvrts = static_cast<int>(vrts.size());
+	ntris = static_cast<int>(tris.size() / 3);
 
 	return 1;
 }
@@ -358,7 +401,7 @@ static inline int MakeCylinder(int &nvrts, vector<glm::vec3> &vrts, vector<glm::
 * @param[in] rad,len 円筒の半径と長さ
 * @param[in] slices 円筒の円に沿ったポリゴン分割数
 */
-static inline int MakeCapsule(int &nvrts, vector<glm::vec3> &vrts, vector<glm::vec3> &nrms, int &ntris, vector<int> &tris,
+static inline int MakeCapsule(int& nvrts, vector<glm::vec3>& vrts, vector<glm::vec3>& nrms, int& ntris, vector<int>& tris,
 	float rad, float len, int slices = 16, int stacks = 8)
 {
 	const float pi = glm::pi<float>();
@@ -366,49 +409,50 @@ static inline int MakeCapsule(int &nvrts, vector<glm::vec3> &vrts, vector<glm::v
 
 	// 球体の中心断面(赤道部分)に沿った頂点を2重にして，
 	// その部分を円筒長さ分z方向に伸ばすことでカプセル形状を生成
-	for(int j = 0; j <= stacks; ++j){
-		float t = float(j)/float(stacks);
-		float z = rad*cos(pi*t);
-		float rj = rad*sin(pi*t);	// 高さyでの球の断面円半径
-		float zlen = (j < stacks/2 ? 0.5*len : -0.5*len);	// z方向のオフセット量
+	for (int j = 0; j <= stacks; ++j) {
+		float t = float(j) / float(stacks);
+		float z = rad * cos(pi * t);
+		float rj = rad * sin(pi * t);	// 高さyでの球の断面円半径
+		float zlen = (j < stacks / 2 ? 0.5 * len : -0.5 * len);	// z方向のオフセット量
 
-		if(j == stacks/2){	// 中心断面(赤道部分)に頂点を追加
-			for(int i = 0; i <= slices; ++i){
-				float s = float(i)/float(slices);
-				float x = rj*sin(2*pi*s);
-				float y = rj*cos(2*pi*s);
-				vrts.push_back(glm::vec3(x, y, z-zlen));
+		if (j == stacks / 2) {	// 中心断面(赤道部分)に頂点を追加
+			for (int i = 0; i <= slices; ++i) {
+				float s = float(i) / float(slices);
+				float x = rj * sin(2 * pi * s);
+				float y = rj * cos(2 * pi * s);
+				vrts.push_back(glm::vec3(x, y, z - zlen));
 				nrms.push_back(glm::normalize(glm::vec3(x, y, z)));
 			}
 		}
-		for(int i = 0; i <= slices; ++i){
-			float s = float(i)/float(slices);
-			float x = rj*sin(2*pi*s);
-			float y = rj*cos(2*pi*s);
-			vrts.push_back(glm::vec3(x, y, z+zlen));
+		for (int i = 0; i <= slices; ++i) {
+			float s = float(i) / float(slices);
+			float x = rj * sin(2 * pi * s);
+			float y = rj * cos(2 * pi * s);
+			vrts.push_back(glm::vec3(x, y, z + zlen));
 			nrms.push_back(glm::normalize(glm::vec3(x, y, z)));
 		}
 	}
 
 	// メッシュ作成
-	int nx = slices+1;
-	for(int j = 0; j < stacks+1; ++j){
-		for(int i = 0; i < slices; ++i){
-			tris.push_back((i)+(j)*nx+offset);
-			tris.push_back((i+1)+(j)*nx+offset);
-			tris.push_back((i+1)+(j+1)*nx+offset);
+	int nx = slices + 1;
+	for (int j = 0; j < stacks + 1; ++j) {
+		for (int i = 0; i < slices; ++i) {
+			tris.push_back((i)+(j)*nx + offset);
+			tris.push_back((i + 1) + (j)*nx + offset);
+			tris.push_back((i + 1) + (j + 1) * nx + offset);
 
-			tris.push_back((i)+(j)*nx+offset);
-			tris.push_back((i+1)+(j+1)*nx+offset);
-			tris.push_back((i)+(j+1)*nx+offset);
+			tris.push_back((i)+(j)*nx + offset);
+			tris.push_back((i + 1) + (j + 1) * nx + offset);
+			tris.push_back((i)+(j + 1) * nx + offset);
 		}
 	}
 
 	nvrts = static_cast<int>(vrts.size());
-	ntris = static_cast<int>(tris.size()/3);
+	ntris = static_cast<int>(tris.size() / 3);
 
 	return 1;
 }
+
 
 
 
@@ -424,7 +468,7 @@ struct MeshVBO
 	GLuint cols, cols_attrib;
 	GLuint tris;
 	int nvrts, ntris;
-	MeshVBO() :vrts(0),tcds(0),nrms(0),cols(0),tris(0),nvrts(0),ntris(0),vrts_attrib(0),tcds_attrib(1),nrms_attrib(2),cols_attrib(3) {}
+	MeshVBO() :vrts(0), tcds(0), nrms(0), cols(0), tris(0), nvrts(0), ntris(0), vrts_attrib(0), tcds_attrib(1), nrms_attrib(2), cols_attrib(3) {}
 	~MeshVBO()
 	{
 		glDeleteBuffers(1, &vrts);
@@ -447,14 +491,14 @@ struct MeshVBO
  * @param[in] tcds,ntcds 各頂点のテクスチャ座標情報配列とテクスチャ座標数(=頂点数)
  * @return VBO
  */
-static inline int CreateVBO(MeshVBO &vbo, 
+static inline int CreateVBO(MeshVBO& vbo,
 	const GLfloat* vrts, GLuint nvrts, int dim = 3,
-	const int* tris = 0, GLuint ntris = 0, GLuint nelem = 3, 
+	const int* tris = 0, GLuint ntris = 0, GLuint nelem = 3,
 	const GLfloat* nrms = 0, GLuint nnrms = 0,
 	const GLfloat* cols = 0, GLuint ncols = 0,
 	const GLfloat* tcds = 0, GLuint ntcds = 0)
 {
-	if(!nvrts) return 0;
+	if (!nvrts) return 0;
 
 	// VBO:頂点座標
 	glGenBuffers(1, &vbo.vrts);
@@ -501,13 +545,13 @@ static inline int CreateVBO(MeshVBO &vbo,
  */
 static inline void DeleteVBO(MeshVBO vbo)
 {
-	if(vbo.vrts == 0) return;
+	if (vbo.vrts == 0) return;
 	glDeleteBuffers(1, &vbo.vrts); vbo.vrts = 0;
 
-	if(vbo.tcds != 0){ glDeleteBuffers(1, &vbo.tcds); vbo.tcds = 0; }
-	if(vbo.nrms != 0){ glDeleteBuffers(1, &vbo.nrms); vbo.nrms = 0; }
-	if(vbo.cols != 0){ glDeleteBuffers(1, &vbo.tcds); vbo.cols = 0; }
-	if(vbo.tris != 0){ glDeleteBuffers(1, &vbo.tris); vbo.tris = 0; }
+	if (vbo.tcds != 0) { glDeleteBuffers(1, &vbo.tcds); vbo.tcds = 0; }
+	if (vbo.nrms != 0) { glDeleteBuffers(1, &vbo.nrms); vbo.nrms = 0; }
+	if (vbo.cols != 0) { glDeleteBuffers(1, &vbo.tcds); vbo.cols = 0; }
+	if (vbo.tris != 0) { glDeleteBuffers(1, &vbo.tris); vbo.tris = 0; }
 
 }
 
@@ -585,11 +629,11 @@ static inline void DrawMeshVBO(GLenum mode, int nelem, MeshVBO vbo, int draw, gl
  * @return VAOオブジェクト
  */
 static inline GLuint CreateVAO(
-	const GLfloat *vrts, GLuint nvrts, int dim = 3,
-	const int     *tris = 0, GLuint ntris = 0,
-	const GLfloat *nrms = 0, GLuint nnrms = 0,
-	const GLfloat *cols = 0, GLuint ncols = 0,
-	const GLfloat *tcds = 0, GLuint ntcds = 0)
+	const GLfloat* vrts, GLuint nvrts, int dim = 3,
+	const int* tris = 0, GLuint ntris = 0,
+	const GLfloat* nrms = 0, GLuint nnrms = 0,
+	const GLfloat* cols = 0, GLuint ncols = 0,
+	const GLfloat* tcds = 0, GLuint ntcds = 0)
 {
 	// VAOの生成
 	GLuint vao;
@@ -600,46 +644,46 @@ static inline GLuint CreateVAO(
 	GLuint vvbo;
 	glGenBuffers(1, &vvbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vvbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*dim*nvrts, vrts, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * dim * nvrts, vrts, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, dim, GL_FLOAT, GL_FALSE, 0, 0);
 
 	// VBO:頂点テクスチャ座標
-	if(tcds){
+	if (tcds) {
 		GLuint tvbo;
 		glGenBuffers(1, &tvbo);
 		glBindBuffer(GL_ARRAY_BUFFER, tvbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*2*ntcds, tcds, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 2 * ntcds, tcds, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	}
 
 	// VBO:頂点法線
-	if(nrms){
+	if (nrms) {
 		GLuint nvbo;
 		glGenBuffers(1, &nvbo);
 		glBindBuffer(GL_ARRAY_BUFFER, nvbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*dim*nnrms, nrms, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * dim * nnrms, nrms, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, dim, GL_FLOAT, GL_FALSE, 0, 0);
 	}
 
 	// VBO:頂点描画色
-	if(cols){
+	if (cols) {
 		GLuint cvbo;
 		glGenBuffers(1, &cvbo);
 		glBindBuffer(GL_ARRAY_BUFFER, cvbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*3*ncols, cols, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * ncols, cols, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(3);
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	}
 
 	// VBO:三角形ポリゴンインデックス
-	if(tris){
+	if (tris) {
 		GLuint pvbo;
 		glGenBuffers(1, &pvbo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pvbo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*ntris*3, tris, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * ntris * 3, tris, GL_STATIC_DRAW);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -657,13 +701,13 @@ static inline GLuint CreateVAO(
  * @param[in] n データ数
  * @return VBOオブジェクト
  */
-static inline GLuint UpdateDataVAO(GLuint vao, GLuint index, const GLfloat *data, GLuint n)
+static inline GLuint UpdateDataVAO(GLuint vao, GLuint index, const GLfloat* data, GLuint n)
 {
 	glBindVertexArray(vao);
 	GLuint vbo;
 	glGetVertexAttribIuiv(index, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat)*n, data);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * n, data);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	return vbo;
@@ -688,17 +732,17 @@ static inline void DeleteVAO(GLuint vao)
  */
 static inline void DrawMeshVAO(GLuint vao, int draw, int nvrts, int ntris, glm::vec3 col[3])
 {
-	if(!vao) return;
+	if (!vao) return;
 
 	glBindVertexArray(vao);
-	if(draw & 0x04){
+	if (draw & 0x04) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnable(GL_LIGHTING);
-		
+
 		glColor3fv(glm::value_ptr(col[2]));
-		glDrawElements(GL_TRIANGLES, ntris*3, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, ntris * 3, GL_UNSIGNED_INT, 0);
 	}
-	if(draw & 0x02){
+	if (draw & 0x02) {
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(1.0, 1.0);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -706,9 +750,9 @@ static inline void DrawMeshVAO(GLuint vao, int draw, int nvrts, int ntris, glm::
 
 		glLineWidth(1.0);
 		glColor3fv(glm::value_ptr(col[1]));
-		glDrawElements(GL_TRIANGLES, ntris*3, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, ntris * 3, GL_UNSIGNED_INT, 0);
 	}
-	if(draw & 0x01){
+	if (draw & 0x01) {
 		glDisable(GL_LIGHTING);
 
 		glPointSize(8.0);
@@ -736,25 +780,25 @@ inline static void DrawPrimitive(const GLuint vao, const int nvrts, const int nt
 	// 図形の描画
 	glDisable(GL_LIGHTING);
 	glBindVertexArray(vao);
-	if(draw & 0x01){
+	if (draw & 0x01) {
 		glColor3d(1.0, 0.3, 0.3);
 		glPointSize(5.0);
 		glDrawArrays(GL_POINTS, 0, nvrts);
 	}
-	if(draw & 0x02){
+	if (draw & 0x02) {
 		glColor3d(0.5, 0.9, 0.9);
 		glLineWidth(4.0);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDrawElements(GL_TRIANGLES, ntris*3, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, ntris * 3, GL_UNSIGNED_INT, 0);
 	}
-	if(draw & 0x04){
+	if (draw & 0x04) {
 		glEnable(GL_LIGHTING);
 		//glDisable(GL_CULL_FACE);
 		glEnable(GL_AUTO_NORMAL);
 		glEnable(GL_NORMALIZE);
 		glColor3d(0.1, 0.5, 1.0);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDrawElements(GL_TRIANGLES, ntris*3, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, ntris * 3, GL_UNSIGNED_INT, 0);
 	}
 	glBindVertexArray(0);
 }
@@ -766,7 +810,7 @@ inline static void DrawPrimitive(const GLuint vao, const int nvrts, const int nt
 //-----------------------------------------------------------------------------
 // glm関係の関数
 //-----------------------------------------------------------------------------
-inline int IDX4(int row, int col){ return (row | (col<<2)); }
+inline int IDX4(int row, int col) { return (row | (col << 2)); }
 
 /*!
  * 1次元配列に格納された4x4行列とglm::vec3ベクトルの掛け算
@@ -781,9 +825,9 @@ inline int IDX4(int row, int col){ return (row | (col<<2)); }
 inline glm::vec3 MulMat4Vec3(GLfloat* m, const glm::vec3& v)
 {
 	glm::vec3 d(0.0);
-	d[0] = (v[0]*m[IDX4(0, 0)]+v[1]*m[IDX4(0, 1)]+v[2]*m[IDX4(0, 2)]);
-	d[1] = (v[0]*m[IDX4(1, 0)]+v[1]*m[IDX4(1, 1)]+v[2]*m[IDX4(1, 2)]);
-	d[2] = (v[0]*m[IDX4(2, 0)]+v[1]*m[IDX4(2, 1)]+v[2]*m[IDX4(2, 2)]);
+	d[0] = (v[0] * m[IDX4(0, 0)] + v[1] * m[IDX4(0, 1)] + v[2] * m[IDX4(0, 2)]);
+	d[1] = (v[0] * m[IDX4(1, 0)] + v[1] * m[IDX4(1, 1)] + v[2] * m[IDX4(1, 2)]);
+	d[2] = (v[0] * m[IDX4(2, 0)] + v[1] * m[IDX4(2, 1)] + v[2] * m[IDX4(2, 2)]);
 	return d;
 }
 
@@ -798,7 +842,7 @@ inline glm::vec3 MulMat4Vec3(GLfloat* m, const glm::vec3& v)
  * @return string型に変換したもの
  */
 template<typename T>
-inline std::string RX_TO_STRING(const T &x)
+inline std::string RX_TO_STRING(const T& x)
 {
 	std::stringstream ss;
 	ss << x;
@@ -807,7 +851,7 @@ inline std::string RX_TO_STRING(const T &x)
 
 //! string型に<<オペレータを設定
 template<typename T>
-inline std::string &operator<<(std::string &cb, const T &a)
+inline std::string& operator<<(std::string& cb, const T& a)
 {
 	cb += RX_TO_STRING(a);
 	return cb;
@@ -821,12 +865,12 @@ inline std::string &operator<<(std::string &cb, const T &a)
 static inline void divideString(const string& org, vector<string>& div)
 {
 	size_t pos0 = 0, pos1 = 0;
-	while(pos1 != string::npos){
+	while (pos1 != string::npos) {
 		pos1 = org.find("\n", pos0);
 
-		div.push_back(org.substr(pos0, pos1-pos0));
+		div.push_back(org.substr(pos0, pos1 - pos0));
 
-		pos0 = pos1+1;
+		pos0 = pos1 + 1;
 	}
 }
 
@@ -837,32 +881,32 @@ static inline void divideString(const string& org, vector<string>& div)
  * @param[out] v 値
  * @return 要素記述数
  */
-inline int StringToVec3(const string &s, glm::vec3 &v)
+inline int StringToVec3(const string& s, glm::vec3& v)
 {
 	int vcount = 0;
 	size_t pos;
 	v = glm::vec3(0.0);
-	if((pos = s.find('(')) != string::npos){
-		while(pos != string::npos && vcount < 3){
+	if ((pos = s.find('(')) != string::npos) {
+		while (pos != string::npos && vcount < 3) {
 			size_t pos1 = pos;
-			if((pos1 = s.find(',', pos+1)) != string::npos){
-				v[vcount] = atof(s.substr(pos+1, (pos1-(pos+1))).c_str());
+			if ((pos1 = s.find(',', pos + 1)) != string::npos) {
+				v[vcount] = atof(s.substr(pos + 1, (pos1 - (pos + 1))).c_str());
 				vcount++;
 				pos = pos1;
 			}
-			else if((pos1 = s.find(')', pos+1)) != string::npos){
-				v[vcount] = atof(s.substr(pos+1, (pos1-(pos+1))).c_str());
+			else if ((pos1 = s.find(')', pos + 1)) != string::npos) {
+				v[vcount] = atof(s.substr(pos + 1, (pos1 - (pos + 1))).c_str());
 				vcount++;
 				break;
 			}
-			else{
+			else {
 				break;
 			}
 		}
 	}
-	if(vcount < 3){
-		for(int i = vcount; i < 3; ++i){
-			v[i] = v[vcount-1];
+	if (vcount < 3) {
+		for (int i = vcount; i < 3; ++i) {
+			v[i] = v[vcount - 1];
 		}
 	}
 
@@ -874,15 +918,15 @@ inline int StringToVec3(const string &s, glm::vec3 &v)
  * @param[in] x 整数値
  * @return xの下一桁
  */
-inline int LowOneDigit(const int &x)
+inline int LowOneDigit(const int& x)
 {
 	int x1 = (x < 0) ? -x : x;
 	float a = 10;
 
 	//INT_MAX = 2147483647
-	for(int i = 10; i >= 1; i--){
+	for (int i = 10; i >= 1; i--) {
 		a = pow(10.0, (float)i);
-		while(x1 > a){
+		while (x1 > a) {
 			x1 -= (int)a;
 		}
 	}
@@ -896,22 +940,22 @@ inline int LowOneDigit(const int &x)
  * @param[in] d 桁数
  * @return 0付きの数字(string)
  */
-inline string GenZeroNo(int n, const int &d)
+inline string GenZeroNo(int n, const int& d)
 {
 	string zero_no = "";
-	int dn = d-1;
-	if(n > 0){
-		dn = (int)(log10((float)n))+1;
+	int dn = d - 1;
+	if (n > 0) {
+		dn = (int)(log10((float)n)) + 1;
 	}
-	else if(n == 0){
+	else if (n == 0) {
 		dn = 1;
 	}
-	else{
+	else {
 		n = 0;
 		dn = 1;
 	}
 
-	for(int i = 0; i < d-dn; ++i){
+	for (int i = 0; i < d - dn; ++i) {
 		zero_no += "0";
 	}
 
@@ -928,21 +972,21 @@ inline string GenZeroNo(int n, const int &d)
  */
 inline string GenTimeString(float sec, bool use_msec = false)
 {
-	long value = (int)(1000*sec+0.5);	// ミリ秒
+	long value = (int)(1000 * sec + 0.5);	// ミリ秒
 
-	unsigned int h = (unsigned int)(value/3600000);	// 時間
-	value -= h*3600000;
-	unsigned int m = (unsigned int)(value/60000);		// 分
-	value -= m*60000;
-	unsigned int s = (unsigned int)(value/1000);		// 秒
-	value -= s*1000;
+	unsigned int h = (unsigned int)(value / 3600000);	// 時間
+	value -= h * 3600000;
+	unsigned int m = (unsigned int)(value / 60000);		// 分
+	value -= m * 60000;
+	unsigned int s = (unsigned int)(value / 1000);		// 秒
+	value -= s * 1000;
 	unsigned int ms = (unsigned int)(value);			// ミリ秒
 
 	stringstream ss;
-	if(h > 0) ss << GenZeroNo(h, 2) << ":";
+	if (h > 0) ss << GenZeroNo(h, 2) << ":";
 	ss << GenZeroNo(m, 2) << ":";
 	ss << GenZeroNo(s, 2);
-	if(use_msec) ss << "." << GenZeroNo(ms, 3);
+	if (use_msec) ss << "." << GenZeroNo(ms, 3);
 
 	return ss.str();
 }
@@ -955,7 +999,7 @@ inline string GenTimeString(float sec, bool use_msec = false)
 inline string GenTimeString(int h, int m, int s)
 {
 	stringstream ss;
-	if(h > 0) ss << GenZeroNo(h, 2) << ":";
+	if (h > 0) ss << GenZeroNo(h, 2) << ":";
 	ss << GenZeroNo(m, 2) << ":";
 	ss << GenZeroNo(s, 2);
 	return ss.str();
@@ -971,9 +1015,9 @@ inline string GenTimeString(int h, int m, int s)
  */
 inline int ExistFile(const string fn)
 {
-	FILE *fp;
+	FILE* fp;
 
-	if((fp = fopen(fn.c_str(), "r")) == NULL){
+	if ((fp = fopen(fn.c_str(), "r")) == NULL) {
 		return 0;
 	}
 
@@ -986,10 +1030,10 @@ inline int ExistFile(const string fn)
  * @param[in] str ファイル・フォルダパス
  * @param[out] pos 見つかった位置
  */
-inline bool FindPathBound(const string &str, string::size_type &pos)
+inline bool FindPathBound(const string& str, string::size_type& pos)
 {
-	if((pos = str.find_last_of("/")) == string::npos){
-		if((pos = str.find_last_of("\\")) == string::npos){
+	if ((pos = str.find_last_of("/")) == string::npos) {
+		if ((pos = str.find_last_of("\\")) == string::npos) {
 			return false;
 		}
 	}
@@ -1003,7 +1047,7 @@ inline bool FindPathBound(const string &str, string::size_type &pos)
  * @param[in] ext 拡張子
  * @return fnの拡張子がextと同じならtrue
  */
-inline bool SearchCompExt(const string &fn, const string &ext)
+inline bool SearchCompExt(const string& fn, const string& ext)
 {
 	return (fn.find(ext, 0) != string::npos);
 }
@@ -1017,27 +1061,27 @@ inline bool SearchCompExt(const string &fn, const string &ext)
  * @param d    : 連番桁数
  * @return 生成したファイル名
  */
-inline string CreateFileName(const string &head, const string &ext, int n, const int &d)
+inline string CreateFileName(const string& head, const string& ext, int n, const int& d)
 {
 	string file_name = head;
-	int dn = d-1;
-	if(n > 0){
-		dn = (int)(log10((float)n))+1;
+	int dn = d - 1;
+	if (n > 0) {
+		dn = (int)(log10((float)n)) + 1;
 	}
-	else if(n == 0){
+	else if (n == 0) {
 		dn = 1;
 	}
-	else{
+	else {
 		n = 0;
 		dn = 1;
 	}
 
-	for(int i = 0; i < d-dn; ++i){
+	for (int i = 0; i < d - dn; ++i) {
 		file_name += "0";
 	}
 
 	file_name += RX_TO_STRING(n);
-	if(!ext.empty() && ext[0] != '.') file_name += ".";
+	if (!ext.empty() && ext[0] != '.') file_name += ".";
 	file_name += ext;
 
 	return file_name;
@@ -1051,18 +1095,18 @@ inline string CreateFileName(const string &head, const string &ext, int n, const
  * @param[in] path パス
  * @return ファイル名
  */
-inline string GetFileName(const string &path)
+inline string GetFileName(const string& path)
 {
 	size_t pos1;
 
 	pos1 = path.rfind('\\');
-	if(pos1 != string::npos){
-		return path.substr(pos1+1, path.size()-pos1-1);
+	if (pos1 != string::npos) {
+		return path.substr(pos1 + 1, path.size() - pos1 - 1);
 	}
 
 	pos1 = path.rfind('/');
-	if(pos1 != string::npos){
-		return path.substr(pos1+1, path.size()-pos1-1);
+	if (pos1 != string::npos) {
+		return path.substr(pos1 + 1, path.size() - pos1 - 1);
 	}
 
 	return path;
@@ -1073,23 +1117,23 @@ inline string GetFileName(const string &path)
  * @param[in] path ファイルパス
  * @return (小文字化した)拡張子
  */
-inline string GetExtension(const string &path)
+inline string GetExtension(const string& path)
 {
 	string ext;
 	size_t pos1 = path.rfind('.');
-	if(pos1 != string::npos){
-		ext = path.substr(pos1+1, path.size()-pos1);
+	if (pos1 != string::npos) {
+		ext = path.substr(pos1 + 1, path.size() - pos1);
 		string::iterator itr = ext.begin();
-		while(itr != ext.end()){
+		while (itr != ext.end()) {
 			*itr = tolower(*itr);
 			itr++;
 		}
-		itr = ext.end()-1;
-		while(itr != ext.begin()){	// パスの最後に\0やスペースがあったときの対策
-			if(*itr == 0 || *itr == 32){
+		itr = ext.end() - 1;
+		while (itr != ext.begin()) {	// パスの最後に\0やスペースがあったときの対策
+			if (*itr == 0 || *itr == 32) {
 				ext.erase(itr--);
 			}
-			else{
+			else {
 				itr--;
 			}
 		}
@@ -1105,10 +1149,10 @@ inline string GetExtension(const string &path)
  * @param[in] rw    入出力フラグ (1:読込, 2:書込, 4:追記)
  * @return ファイルオープン成功:1, 失敗:0
  */
-static inline int OpenFileStream(fstream &file, const string &path, int rw = 1)
+static inline int OpenFileStream(fstream& file, const string& path, int rw = 1)
 {
-	file.open(path.c_str(), (rw & 0x01 ? ios::in : 0)|(rw & 0x02 ? ios::out : 0)|(rw & 0x04 ? ios::app : 0));
-	if(!file || !file.is_open() || file.bad() || file.fail()){
+	file.open(path.c_str(), (rw & 0x01 ? ios::in : 0) | (rw & 0x02 ? ios::out : 0) | (rw & 0x04 ? ios::app : 0));
+	if (!file || !file.is_open() || file.bad() || file.fail()) {
 		return 0;
 	}
 	return 1;
@@ -1122,28 +1166,28 @@ static inline int OpenFileStream(fstream &file, const string &path, int rw = 1)
 static int MkDir(string dir)
 {
 #ifdef WIN32
-	if(_mkdir(dir.c_str()) != 0){
+	if (_mkdir(dir.c_str()) != 0) {
 		char cur_dir[512];
 		_getcwd(cur_dir, 512);	// カレントフォルダを確保しておく
-		if(_chdir(dir.c_str()) == 0){	// chdirでフォルダ存在チェック
+		if (_chdir(dir.c_str()) == 0) {	// chdirでフォルダ存在チェック
 			cout << "MkDir : " << dir << " is already exist." << endl;
 			_chdir(cur_dir);	// カレントフォルダを元に戻す
 			return 1;
 		}
-		else{
+		else {
 			size_t pos = dir.find_last_of("\\/");
-			if(pos != string::npos){	// 多階層の可能性有り
-				int parent = MkDir(dir.substr(0, pos+1));	// 親ディレクトリを再帰的に作成
-				if(parent){
-					if(_mkdir(dir.c_str()) == 0){
+			if (pos != string::npos) {	// 多階層の可能性有り
+				int parent = MkDir(dir.substr(0, pos + 1));	// 親ディレクトリを再帰的に作成
+				if (parent) {
+					if (_mkdir(dir.c_str()) == 0) {
 						return 1;
 					}
-					else{
+					else {
 						return 0;
 					}
 				}
 			}
-			else{
+			else {
 				return 0;
 			}
 		}
@@ -1170,7 +1214,7 @@ static int loadTexture(const string& fn, GLuint& tex_name, bool mipmap, bool com
 	int w, h, c, wstep;
 	unsigned char* pimg;
 	pimg = ReadBitmapFile(fn, w, h, c, wstep, false, true);
-	if(!pimg){
+	if (!pimg) {
 		return 0;
 	}
 
@@ -1178,29 +1222,29 @@ static int loadTexture(const string& fn, GLuint& tex_name, bool mipmap, bool com
 
 	// 画像フォーマット
 	format = GL_RGBA;
-	if(c == 1){
+	if (c == 1) {
 		format = GL_LUMINANCE;
 	}
-	else if(c == 3){
+	else if (c == 3) {
 		format = GL_RGB;
 	}
 
 	// OpenGL内部の格納フォーマット
-	if(compress){
+	if (compress) {
 		iformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-		if(c == 1){
+		if (c == 1) {
 			iformat = GL_COMPRESSED_LUMINANCE_ARB;
 		}
-		else if(c == 3){
+		else if (c == 3) {
 			iformat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		}
 	}
-	else{
+	else {
 		iformat = GL_RGBA;
-		if(c == 1){
+		if (c == 1) {
 			iformat = GL_LUMINANCE;
 		}
-		else if(c == 3){
+		else if (c == 3) {
 			iformat = GL_RGB;
 		}
 	}
@@ -1208,7 +1252,7 @@ static int loadTexture(const string& fn, GLuint& tex_name, bool mipmap, bool com
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	// テクスチャ作成
-	if(tex_name == 0){
+	if (tex_name == 0) {
 		glGenTextures(1, &tex_name);
 
 		glBindTexture(GL_TEXTURE_2D, tex_name);
@@ -1218,23 +1262,23 @@ static int loadTexture(const string& fn, GLuint& tex_name, bool mipmap, bool com
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		if(mipmap){
+		if (mipmap) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 6);
 		}
 
 		glTexImage2D(GL_TEXTURE_2D, 0, iformat, w, h, 0, format, GL_UNSIGNED_BYTE, pimg);
 
-		if(mipmap){
+		if (mipmap) {
 			glGenerateMipmapEXT(GL_TEXTURE_2D);
 		}
 	}
-	else{
+	else {
 		glBindTexture(GL_TEXTURE_2D, tex_name);
 		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, format, GL_UNSIGNED_BYTE, pimg);
 		glTexImage2D(GL_TEXTURE_2D, 0, iformat, w, h, 0, format, GL_UNSIGNED_BYTE, pimg);
 
-		if(mipmap){
+		if (mipmap) {
 			glGenerateMipmapEXT(GL_TEXTURE_2D);
 		}
 	}
@@ -1255,27 +1299,27 @@ static int loadTexture(const string& fn, GLuint& tex_name, bool mipmap, bool com
 static int makeCheckerBoardTexture(GLuint& tex_name, const int size = 8, bool mipmap = false, bool compress = false)
 {
 	// ピクセルデータ生成
-	unsigned char* pimg = new unsigned char[size*size*4];
-	if(!pimg) return 0;
+	unsigned char* pimg = new unsigned char[size * size * 4];
+	if (!pimg) return 0;
 
-	int cw = size/4;
+	int cw = size / 4;
 
 	// チェッカーボードパターン生成
-	for(int i = 0; i < size; ++i){
-		for(int j = 0; j < size; ++j){
-			if((i+j%cw)%cw == 0){
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			if ((i + j % cw) % cw == 0) {
 				// dark
-				pimg[(i*size+j)*4 + 0] = static_cast<GLubyte>(170);
-				pimg[(i*size+j)*4 + 1] = static_cast<GLubyte>(200);
-				pimg[(i*size+j)*4 + 2] = static_cast<GLubyte>(170);
-				pimg[(i*size+j)*4 + 3] = static_cast<GLubyte>(255);
+				pimg[(i * size + j) * 4 + 0] = static_cast<GLubyte>(170);
+				pimg[(i * size + j) * 4 + 1] = static_cast<GLubyte>(200);
+				pimg[(i * size + j) * 4 + 2] = static_cast<GLubyte>(170);
+				pimg[(i * size + j) * 4 + 3] = static_cast<GLubyte>(255);
 			}
 			else {
 				// light
-				pimg[(i*size+j)*4 + 0] = static_cast<GLubyte>(205);
-				pimg[(i*size+j)*4 + 1] = static_cast<GLubyte>(245);
-				pimg[(i*size+j)*4 + 2] = static_cast<GLubyte>(205);
-				pimg[(i*size+j)*4 + 3] = static_cast<GLubyte>(255);
+				pimg[(i * size + j) * 4 + 0] = static_cast<GLubyte>(205);
+				pimg[(i * size + j) * 4 + 1] = static_cast<GLubyte>(245);
+				pimg[(i * size + j) * 4 + 2] = static_cast<GLubyte>(205);
+				pimg[(i * size + j) * 4 + 3] = static_cast<GLubyte>(255);
 			}
 		}
 	}
@@ -1287,17 +1331,17 @@ static int makeCheckerBoardTexture(GLuint& tex_name, const int size = 8, bool mi
 	format = GL_RGBA;
 
 	// OpenGL内部の格納フォーマット
-	if(compress){
+	if (compress) {
 		iformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 	}
-	else{
+	else {
 		iformat = GL_RGBA;
 	}
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
 	// テクスチャ作成
-	if(tex_name == 0){
+	if (tex_name == 0) {
 		glGenTextures(1, &tex_name);
 		glBindTexture(GL_TEXTURE_2D, tex_name);
 
@@ -1306,23 +1350,23 @@ static int makeCheckerBoardTexture(GLuint& tex_name, const int size = 8, bool mi
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (mipmap ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST));
 
-		if(mipmap){
+		if (mipmap) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 6);
 		}
 
 		glTexImage2D(GL_TEXTURE_2D, 0, iformat, size, size, 0, format, GL_UNSIGNED_BYTE, pimg);
 
-		if(mipmap){
+		if (mipmap) {
 			glGenerateMipmapEXT(GL_TEXTURE_2D);
 		}
 	}
-	else{
+	else {
 		glBindTexture(GL_TEXTURE_2D, tex_name);
 		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, format, GL_UNSIGNED_BYTE, pimg);
 		glTexImage2D(GL_TEXTURE_2D, 0, iformat, size, size, 0, format, GL_UNSIGNED_BYTE, pimg);
 
-		if(mipmap){
+		if (mipmap) {
 			glGenerateMipmapEXT(GL_TEXTURE_2D);
 		}
 	}
@@ -1345,15 +1389,15 @@ static int makePlainTexture(GLuint& tex_name, glm::vec3 col)
 {
 	int size = 2;
 	// ピクセルデータ生成
-	unsigned char* pimg = new unsigned char[size*size*4];
-	if(!pimg) return 0;
+	unsigned char* pimg = new unsigned char[size * size * 4];
+	if (!pimg) return 0;
 
-	for(int i = 0; i < size; ++i){
-		for(int j = 0; j < size; ++j){
-			pimg[(i*size+j)*4 + 0] = static_cast<GLubyte>(col[0]*255);
-			pimg[(i*size+j)*4 + 1] = static_cast<GLubyte>(col[1]*255);
-			pimg[(i*size+j)*4 + 2] = static_cast<GLubyte>(col[2]*255);
-			pimg[(i*size+j)*4 + 3] = static_cast<GLubyte>(0);
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			pimg[(i * size + j) * 4 + 0] = static_cast<GLubyte>(col[0] * 255);
+			pimg[(i * size + j) * 4 + 1] = static_cast<GLubyte>(col[1] * 255);
+			pimg[(i * size + j) * 4 + 2] = static_cast<GLubyte>(col[2] * 255);
+			pimg[(i * size + j) * 4 + 3] = static_cast<GLubyte>(0);
 		}
 	}
 
@@ -1366,7 +1410,7 @@ static int makePlainTexture(GLuint& tex_name, glm::vec3 col)
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
 	// テクスチャ作成
-	if(tex_name == 0){
+	if (tex_name == 0) {
 		glGenTextures(1, &tex_name);
 		glBindTexture(GL_TEXTURE_2D, tex_name);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -1375,7 +1419,7 @@ static int makePlainTexture(GLuint& tex_name, glm::vec3 col)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, iformat, size, size, 0, format, GL_UNSIGNED_BYTE, pimg);
 	}
-	else{
+	else {
 		glBindTexture(GL_TEXTURE_2D, tex_name);
 		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, format, GL_UNSIGNED_BYTE, pimg);
 		glTexImage2D(GL_TEXTURE_2D, 0, iformat, size, size, 0, format, GL_UNSIGNED_BYTE, pimg);
@@ -1391,7 +1435,7 @@ static void BindPlainTexture(glm::vec3 col)
 {
 	glActiveTexture(GL_TEXTURE0);
 	static GLuint tex = 0;
-	if(tex == 0){
+	if (tex == 0) {
 		makePlainTexture(tex, col);
 	}
 	glBindTexture(GL_TEXTURE_2D, tex);
@@ -1405,11 +1449,11 @@ static void BindPlainTexture(glm::vec3 col)
 static inline bool saveFrameBuffer(string fn, int w, int h)
 {
 	string ext = GetExtension(fn);
-	if(ext != "bmp") fn += ".bmp";
+	if (ext != "bmp") fn += ".bmp";
 
 	int c = 3;
-	int wstep = (((w+1)*c)/4)*4;
-	vector<unsigned char> imm_buf(wstep*h);
+	int wstep = (((w + 1) * c) / 4) * 4;
+	vector<unsigned char> imm_buf(wstep * h);
 
 	glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &imm_buf[0]);
 	WriteBitmapFile(fn, &imm_buf[0], w, h, c, RX_BMP_WINDOWS_V3, wstep, false, true);
@@ -1431,7 +1475,7 @@ static inline bool saveFrameBuffer(string fn, int w, int h)
 */
 inline void DrawCylinder(float rad, float len, int slices)
 {
-	GLUquadricObj *qobj;
+	GLUquadricObj* qobj;
 	qobj = gluNewQuadric();
 
 	glPushMatrix();
@@ -1462,7 +1506,7 @@ inline void DrawCylinder(float rad, float len, int slices)
 */
 inline void DrawCone(float rad, float len, int slices)
 {
-	GLUquadricObj *qobj;
+	GLUquadricObj* qobj;
 	qobj = gluNewQuadric();
 
 	glPushMatrix();
@@ -1492,12 +1536,12 @@ inline void DrawCone(float rad, float len, int slices)
 inline void DrawArrow(glm::vec3 pos, glm::vec3 vec, float r, float dr = 2.5, float dl = 0.1)
 {
 	float vlen = glm::length(vec);
-	glm::vec3 pos1 = pos+vec*(1.0f-dl*0.5f);
+	glm::vec3 pos1 = pos + vec * (1.0f - dl * 0.5f);
 
 	glm::vec3 init(0.0, 0.0, 1.0);    // 円筒と円錐描画はデフォルトでz軸平行
 
-									  // vecとz軸の間の回転角度と回転軸
-	float rot_ang = acos(glm::dot(init, glm::normalize(vec)))*57.295779513082320876798154814114;
+	// vecとz軸の間の回転角度と回転軸
+	float rot_ang = acos(glm::dot(init, glm::normalize(vec))) * 57.295779513082320876798154814114;
 	glm::vec3 rot_axis = glm::normalize(glm::cross(init, glm::normalize(vec)));
 
 	glPushMatrix();
@@ -1505,16 +1549,16 @@ inline void DrawArrow(glm::vec3 pos, glm::vec3 vec, float r, float dr = 2.5, flo
 	glTranslatef(pos[0], pos[1], pos[2]);    // 原点に移動
 	glRotatef(rot_ang, rot_axis[0], rot_axis[1], rot_axis[2]);    // vec方向に座標系を回転
 
-																  // ベクトルの軸部分
-	DrawCylinder(r, vlen*(1.0-dl*0.5), 16);
+	// ベクトルの軸部分
+	DrawCylinder(r, vlen * (1.0 - dl * 0.5), 16);
 
 	// ベクトルの傘部分
-	float alen = dl*vlen;    // 円錐の高さ
-	float arad = dr*r;        // 円錐の半径
+	float alen = dl * vlen;    // 円錐の高さ
+	float arad = dr * r;        // 円錐の半径
 
-	pos1 = pos+vec;
+	pos1 = pos + vec;
 
-	glTranslatef(0.0, 0.0, vlen-alen);
+	glTranslatef(0.0, 0.0, vlen - alen);
 	DrawCone(arad, alen, 16);
 
 	glPopMatrix();
@@ -1601,13 +1645,13 @@ static inline void DrawWireCuboid(const glm::vec3& min, const glm::vec3& max, co
 static inline void DrawWireCircle(const float& rad, const int& n)
 {
 	float t = 0.0;
-	float dt = 2.0*RX_PI/(float)n;
+	float dt = 2.0 * RX_PI / (float)n;
 
 	glBegin(GL_LINE_LOOP);
-	do{
-		glVertex3f(rad*cos(t), rad*sin(t), 0.0);
+	do {
+		glVertex3f(rad * cos(t), rad * sin(t), 0.0);
 		t += dt;
-	} while(t < 2.0*RX_PI);
+	} while (t < 2.0 * RX_PI);
 	glEnd();
 }
 
@@ -1619,13 +1663,13 @@ static inline void DrawWireCircle(const float& rad, const int& n)
 static inline void DrawWireCircleXZ(const float& rad, const int& n)
 {
 	float t = 0.0;
-	float dt = 2.0*RX_PI/(float)n;
+	float dt = 2.0 * RX_PI / (float)n;
 
 	glBegin(GL_LINE_LOOP);
-	do{
-		glVertex3f(rad*cos(t), 0.0, rad*sin(t));
+	do {
+		glVertex3f(rad * cos(t), 0.0, rad * sin(t));
 		t += dt;
-	} while(t < 2.0*RX_PI);
+	} while (t < 2.0 * RX_PI);
 	glEnd();
 }
 
@@ -1645,28 +1689,28 @@ static inline void DrawWireSphere(const glm::vec3& cen, const float& rad, const 
 
 	// 緯度(x-y平面に平行)
 	float z, dz;
-	dz = 2.0*rad/8.0f;
-	z = -(rad-dz);
-	do{
+	dz = 2.0 * rad / 8.0f;
+	z = -(rad - dz);
+	do {
 		glPushMatrix();
 		glTranslatef(0.0, 0.0, z);
-		DrawWireCircle(sqrt(rad*rad-z*z), 32);
+		DrawWireCircle(sqrt(rad * rad - z * z), 32);
 		glPopMatrix();
 		z += dz;
-	} while(z < rad);
+	} while (z < rad);
 
 	// 経度(z軸まわりに回転)
 	float t, dt;
 	t = 0.0f;
-	dt = 180.0/8.0;
-	do{
+	dt = 180.0 / 8.0;
+	do {
 		glPushMatrix();
 		glRotatef(t, 0.0, 0.0, 1.0);
 		DrawWireCircleXZ(rad, 32);
 		glPopMatrix();
 
 		t += dt;
-	} while(t < 180);
+	} while (t < 180);
 
 	//glutWireSphere(rad, 10, 5);
 	glPopMatrix();
@@ -1681,22 +1725,22 @@ static inline void DrawWireSphere(const glm::vec3& cen, const float& rad, const 
 static inline void DrawCube(float len)
 {
 	// 頂点座標
-	float sl = 0.5f*len;	// 辺の長さの半分
+	float sl = 0.5f * len;	// 辺の長さの半分
 	vector<glm::vec3> vrts(6);
 	vrts[0] = glm::vec3(-sl, -sl, -sl);
-	vrts[1] = glm::vec3( sl, -sl, -sl);
-	vrts[2] = glm::vec3( sl, -sl,  sl);
-	vrts[3] = glm::vec3(-sl, -sl,  sl);
-	vrts[4] = glm::vec3(-sl,  sl, -sl);
-	vrts[5] = glm::vec3( sl,  sl, -sl);
-	vrts[6] = glm::vec3( sl,  sl,  sl);
-	vrts[7] = glm::vec3(-sl,  sl,  sl);
+	vrts[1] = glm::vec3(sl, -sl, -sl);
+	vrts[2] = glm::vec3(sl, -sl, sl);
+	vrts[3] = glm::vec3(-sl, -sl, sl);
+	vrts[4] = glm::vec3(-sl, sl, -sl);
+	vrts[5] = glm::vec3(sl, sl, -sl);
+	vrts[6] = glm::vec3(sl, sl, sl);
+	vrts[7] = glm::vec3(-sl, sl, sl);
 
 	// 四角形メッシュ描画
 	int f[6][4] = { {0,1,2,3}, {4,7,6,5}, {0,3,7,4}, {1,5,6,2}, {0,4,5,1}, {3,2,6,7} };
-	for(int j = 0; j < 6; ++j){
+	for (int j = 0; j < 6; ++j) {
 		glBegin(GL_QUADS);
-		for(int i = 0; i < 4; ++i){
+		for (int i = 0; i < 4; ++i) {
 			glVertex3fv(glm::value_ptr(vrts[f[j][i]]));
 		}
 		glEnd();
@@ -1713,7 +1757,7 @@ static inline void DrawCube(float len)
 static inline void DrawCubeVBO(void)
 {
 	static MeshVBO vbo;
-	if(vbo.vrts == 0){
+	if (vbo.vrts == 0) {
 		// ポリゴンデータ作成
 		int nvrts, ntris;
 		vector<glm::vec3> vrts, nrms;
@@ -1736,7 +1780,7 @@ static inline void DrawCubeVBO(void)
 	glNormalPointer(GL_FLOAT, 0, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.tris);
-	glDrawElements(GL_QUADS, vbo.ntris*4, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_QUADS, vbo.ntris * 4, GL_UNSIGNED_INT, 0);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
@@ -1753,7 +1797,7 @@ static inline void DrawCubeVBO(void)
 static inline void DrawSphereVBO(void)
 {
 	static MeshVBO vbo;
-	if(vbo.vrts == 0){
+	if (vbo.vrts == 0) {
 		// ポリゴンデータ作成
 		int nvrts, ntris;
 		vector<glm::vec3> vrts, nrms;
@@ -1774,7 +1818,163 @@ static inline void DrawSphereVBO(void)
 	glNormalPointer(GL_FLOAT, 0, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.tris);
-	glDrawElements(GL_TRIANGLES, vbo.ntris*3, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, vbo.ntris * 3, GL_UNSIGNED_INT, 0);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+
+/*!
+* 原点中心の円筒形状描画
+* - 中心は原点(0,0,0)
+* - 半径0.5(直径1)/長さ1で固定 (glScaleで調整する)
+* - VBO使用バージョン
+*/
+static inline void DrawCylinderVBO(void)
+{
+	static MeshVBO vbo;
+	if (vbo.vrts == 0) {
+		// ポリゴンデータ作成
+		int nvrts, ntris;
+		vector<glm::vec3> vrts, nrms;
+		vector<int> tris;
+		MakeCylinder(nvrts, vrts, nrms, ntris, tris, 0.5, 0.5, 1.0, 16, true);
+
+		// VBOの作成
+		CreateVBO(vbo, (GLfloat*)&vrts[0], nvrts, 3, &tris[0], ntris, 3, (GLfloat*)&nrms[0], nvrts);
+	}
+	glShadeModel(GL_SMOOTH);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.vrts);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.nrms);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glNormalPointer(GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.tris);
+	glDrawElements(GL_TRIANGLES, vbo.ntris * 3, GL_UNSIGNED_INT, 0);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+/*!
+* 原点中心のカプセル形状描画
+* - 中心は原点(0,0,0)
+* - 円筒の両端面に半球が付いた形状
+* - VBO使用バージョン
+*/
+static inline void DrawCapsuleVBO(float rad, float len)
+{
+	static MeshVBO vbo_c, vbo_s;
+	if (vbo_c.vrts == 0) {
+		// 円筒部分ポリゴンデータ/VBO作成
+		int nvrts, ntris;
+		vector<glm::vec3> vrts, nrms;
+		vector<int> tris;
+		MakeCylinder(nvrts, vrts, nrms, ntris, tris, 0.5, 0.5, 1.0, 16, 8);
+		CreateVBO(vbo_c, (GLfloat*)&vrts[0], nvrts, 3, &tris[0], ntris, 3, (GLfloat*)&nrms[0], nvrts);
+
+		// 球部分ポリゴンデータ/VBO作成
+		vrts.clear(), nrms.clear(); tris.clear();
+		MakeSphere(nvrts, vrts, nrms, ntris, tris, 0.5, 16, 8);
+		CreateVBO(vbo_s, (GLfloat*)&vrts[0], nvrts, 3, &tris[0], ntris, 3, (GLfloat*)&nrms[0], nvrts);
+	}
+	glShadeModel(GL_SMOOTH);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	// 円筒部分
+	glPushMatrix();
+	glScalef(2 * rad, 2 * rad, len - 2 * rad);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_c.vrts);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_c.nrms);
+	glNormalPointer(GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_c.tris);
+	glDrawElements(GL_TRIANGLES, vbo_c.ntris * 3, GL_UNSIGNED_INT, 0);
+	glPopMatrix();
+
+	// 端面球1(z-)
+	glPushMatrix();
+	glTranslatef(0, 0, -0.5 * len + rad);
+	glScalef(2 * rad, 2 * rad, 2 * rad);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_s.vrts);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_s.nrms);
+	glNormalPointer(GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_s.tris);
+	glDrawElements(GL_TRIANGLES, vbo_s.ntris * 3, GL_UNSIGNED_INT, 0);
+	glPopMatrix();
+
+	// 端面球2(z+)
+	glPushMatrix();
+	glTranslatef(0, 0, 0.5 * len - rad);
+	glScalef(2 * rad, 2 * rad, 2 * rad);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_s.vrts);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_s.nrms);
+	glNormalPointer(GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_s.tris);
+	glDrawElements(GL_TRIANGLES, vbo_s.ntris * 3, GL_UNSIGNED_INT, 0);
+	glPopMatrix();
+
+
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+/*!
+* 原点中心の円錐形状描画
+* - 中心は原点(0,0,0)
+* - 半径0.5(直径1)/長さ1で固定 (glScaleで調整する)
+* - 基本的にCylinderと同じ，片方の端面の半径が0の円筒と考える
+* - VBO使用バージョン
+*/
+static inline void DrawConeVBO(void)
+{
+	static MeshVBO vbo;
+	if (vbo.vrts == 0) {
+		// ポリゴンデータ作成
+		int nvrts, ntris;
+		vector<glm::vec3> vrts, nrms;
+		vector<int> tris;
+		MakeCylinder(nvrts, vrts, nrms, ntris, tris, 0.0, 0.5, 1.0, 16, true);
+
+		// VBOの作成
+		CreateVBO(vbo, (GLfloat*)&vrts[0], nvrts, 3, &tris[0], ntris, 3, (GLfloat*)&nrms[0], nvrts);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.vrts);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.nrms);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glNormalPointer(GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.tris);
+	glDrawElements(GL_TRIANGLES, vbo.ntris * 3, GL_UNSIGNED_INT, 0);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
@@ -1791,7 +1991,7 @@ static inline void DrawSphereVBO(void)
 static void DrawPlaneVBO(double y = 0.0, double s = 20.0, bool use_tex = true)
 {
 	static MeshVBO vbo;
-	if(vbo.vrts == 0){
+	if (vbo.vrts == 0) {
 		// ポリゴンデータ作成
 		int nvrts, ntris;
 		vector<glm::vec3> vrts, nrms;
@@ -1805,7 +2005,7 @@ static void DrawPlaneVBO(double y = 0.0, double s = 20.0, bool use_tex = true)
 	glShadeModel(GL_FLAT);
 
 	static GLuint texFloor = 0;				//!< 床のテクスチャ
-	if(use_tex && texFloor == 0){
+	if (use_tex && texFloor == 0) {
 		// 床テクスチャ読み込み
 		glActiveTexture(GL_TEXTURE0);
 		//loadTexture("floortile.bmp", texFloor, true, false);
@@ -1814,7 +2014,7 @@ static void DrawPlaneVBO(double y = 0.0, double s = 20.0, bool use_tex = true)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
 	}
 
-	if(use_tex){
+	if (use_tex) {
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glActiveTexture(GL_TEXTURE0);
@@ -1839,7 +2039,7 @@ static void DrawPlaneVBO(double y = 0.0, double s = 20.0, bool use_tex = true)
 	glTexCoordPointer(2, GL_FLOAT, 0, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.tris);
-	glDrawElements(GL_QUADS, vbo.ntris*4, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_QUADS, vbo.ntris * 4, GL_UNSIGNED_INT, 0);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
@@ -1850,7 +2050,7 @@ static void DrawPlaneVBO(double y = 0.0, double s = 20.0, bool use_tex = true)
 
 	glPopMatrix();
 
-	if(use_tex){
+	if (use_tex) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
@@ -1863,7 +2063,7 @@ static void DrawPlaneVBO(double y = 0.0, double s = 20.0, bool use_tex = true)
 static void DrawStaticPlane(double y = 0.0, double s = 20.0, bool use_tex = true)
 {
 	static GLuint texFloor = 0;				//!< 床のテクスチャ
-	if(use_tex && texFloor == 0){
+	if (use_tex && texFloor == 0) {
 		// 床テクスチャ読み込み
 		glActiveTexture(GL_TEXTURE0);
 		//loadTexture("floortile.bmp", texFloor, true, false);
@@ -1872,7 +2072,7 @@ static void DrawStaticPlane(double y = 0.0, double s = 20.0, bool use_tex = true
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
 	}
 
-	if(use_tex){
+	if (use_tex) {
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glActiveTexture(GL_TEXTURE0);
@@ -1890,7 +2090,7 @@ static void DrawStaticPlane(double y = 0.0, double s = 20.0, bool use_tex = true
 	}
 	glEnd();
 
-	if(use_tex){
+	if (use_tex) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }

@@ -60,10 +60,11 @@ int g_currentstep = 0;						//!< 現在のステップ数
 const GLfloat RX_GROUND = -0.5f;			//!< 地面の位置(y座標)
 const int MAX_TRAJ = 1024;					//!< ボール中心座標を格納する配列の最大サイズ
 const btVector3 RX_INIT_POS(-1, 0.5, 0);	//!< ボールの初期位置
+const btQuaternion RX_INIT_QROT(1, 0, 0, 1);//!< ボールの初期回転
 
 float g_dt = 0.01;							//!< 時間ステップ幅Δt
 
-// 球
+// 形の定義
 float g_ballrad = 0.1;						//!< 半径		
 
 btVector3 g_frc = btVector3(3, 0, 0);		//!< 初期外力
@@ -103,22 +104,6 @@ void savedisplay(const int& stp)
 }
 
 /*!
-* シミュレーションのリセット
-*  - 自分でグローバル変数を追加した場合はその値のリセット処理の追加を忘れずに
-*/
-void reset(void)
-{
-	// 姿勢の初期化
-	btVector3 pos = RX_INIT_POS; //!< 中心座標
-	btQuaternion qrot(0, 0, 0, 1); //!< 回転
-	btDefaultMotionState* motion_state = new btDefaultMotionState(btTransform(qrot, pos));
-	g_ballbody->setMotionState(motion_state);
-	g_currentstep = 0;
-	switchanimation(0);
-	g_num_trajectory = 0;
-}
-
-/*!
 * 初期化関数
 *  - プログラム起動時に一回だけだけ実行したい処理はここに書く
 */
@@ -151,11 +136,11 @@ void InitBullet(void)
 	g_dynamicsworld->addRigidBody(g_PlaneTerrain);
 
 	// 球体形状を設定
-	btCollisionShape* sphere_shape = new btSphereShape(g_ballrad);
+	btCollisionShape* sphere_shape = new btCylinderShapeZ(btVector3(g_ballrad, g_ballrad, g_ballrad));
 
 	// 剛体の宣言
 	btVector3 pos = RX_INIT_POS; //!< 中心座標
-	btQuaternion qrot(0, 0, 0, 1); //!< 回転
+	btQuaternion qrot = RX_INIT_QROT; //!< 回転
 	btScalar mass = 0.03; //!< 質量
 
 	// 球体の初期位置・姿勢
@@ -217,10 +202,25 @@ void CleanBullet(void) {
 	delete g_ballbody->getMotionState();
 	g_dynamicsworld->removeRigidBody(g_ballbody);
 	delete g_ballbody;
+	delete g_PlaneTerrain->getMotionState();
+	g_dynamicsworld->removeRigidBody(g_PlaneTerrain);
+	delete g_PlaneTerrain;
 
 	// ワールド破棄
 	delete g_dynamicsworld->getBroadphase();
 	delete g_dynamicsworld;
+}
+
+/*!
+* シミュレーションのリセット
+*  - 自分でグローバル変数を追加した場合はその値のリセット処理の追加を忘れずに
+*/
+void reset(void)
+{	
+	CleanBullet();
+	InitBullet();
+	g_currentstep = 0;
+	switchanimation(0);
 }
 
 //-----------------------------------------------------------------------------
@@ -273,15 +273,21 @@ void Display(void)
 
 		glTranslatef(0, 0, -5);	// 視点をz方向に移動
 		
-		// 球体の描画
+		// 剛体の描画
 		glPushMatrix();
-			btVector3 pos = g_ballbody->getCenterOfMassPosition();
-			glTranslatef(pos[0], pos[1], pos[2]);
+			btScalar m[16];
+			btDefaultMotionState* motion = static_cast<btDefaultMotionState*>(g_ballbody->getMotionState());
+			motion->m_graphicsWorldTrans.getOpenGLMatrix(m);
+#ifdef BT_USE_DOUBLE_PRECISION
+			glMultMatrixd(m);
+#else
+			glMultMatrixf(m);
+#endif
 			// 投射オブジェクト
 			glEnable(GL_LIGHTING);
 			glColor3f(0.1, 0.5, 1.0);
-			glScalef(2 * g_ballrad, 2 * g_ballrad, 2 * g_ballrad);
-			DrawSphereVBO();	// VBOによる球体メッシュ描画
+			glScalef(2 * g_ballrad,  2 * g_ballrad, g_ballrad);
+			DrawCylinderVBO();	// VBOによる球体メッシュ描画
 		glPopMatrix();
 
 		// 軌跡
