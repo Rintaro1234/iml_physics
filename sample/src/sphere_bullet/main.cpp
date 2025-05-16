@@ -66,7 +66,7 @@ float g_dt = 0.01;							//!< 時間ステップ幅Δt
 
 // 形の定義
 float g_ballrad = 0.1;						//!< 半径		
-
+float g_ballmass = 0.5f;					//!< 重さ
 btVector3 g_frc = btVector3(3, 0, 0);		//!< 初期外力
 
 float g_ball_restitution = 0.8;					//!< 反発係数(ボール)
@@ -122,6 +122,7 @@ void InitBullet(void)
 	// Bulletのワールド作成
 	g_dynamicsworld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
 	g_dynamicsworld->setGravity(btVector3(0, -9.8, 0));
+	//g_dynamicsworld->setGravity(btVector3(0, 0, 0));
 
 	// 地面の生成
 	// 地面の形状を設定
@@ -141,7 +142,7 @@ void InitBullet(void)
 	// 剛体の宣言
 	btVector3 pos = RX_INIT_POS; //!< 中心座標
 	btQuaternion qrot = RX_INIT_QROT; //!< 回転
-	btScalar mass = 0.03; //!< 質量
+	btScalar mass = g_ballmass; //!< 質量
 
 	// 球体の初期位置・姿勢
 	btDefaultMotionState* motion_state = new btDefaultMotionState(btTransform(qrot, pos));
@@ -287,7 +288,8 @@ void Display(void)
 			glEnable(GL_LIGHTING);
 			glColor3f(0.1, 0.5, 1.0);
 			glScalef(2 * g_ballrad,  2 * g_ballrad, g_ballrad);
-			DrawCylinderVBO();	// VBOによる球体メッシュ描画
+			//DrawCylinderVBO();	// VBOによる球体メッシュ描画
+			DrawCubeVBO();
 		glPopMatrix();
 
 		// 軌跡
@@ -309,6 +311,8 @@ void Timer(void)
 	if (g_animation_on) {
 		if (g_currentstep == 0) {
 			g_ballbody->applyCentralImpulse(g_frc * g_dt);
+			//g_ballbody->applyTorqueImpulse(btVector3(1, 0, 0) * g_dt);
+			g_ballbody->applyImpulse(btVector3(10, 0, 0) * g_dt, btVector3(0, 3, 0));
 		}
 
 		// 球の軌跡の格納
