@@ -72,6 +72,7 @@ float g_dt = 0.002;	//!< 時間ステップ幅
 // Bullet
 btDynamicsWorld* g_dynamicsworld;	//!< Bulletワールド
 btAlignedObjectArray<btCollisionShape*>	g_collisionshapes;		//!< 剛体オブジェクトの形状を格納する動的配列
+btRigidBody* g_movebody; // 動かせる静的オブジェクト
 
 // マウスピック
 btVector3 g_pickpos;
@@ -128,7 +129,7 @@ btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btColli
 /*!
 * 立方体を任意の位置に追加
 */
-void SetRigidCube(btVector3 pos, float mass)
+btRigidBody* SetRigidCube(btVector3 pos, float mass)
 {
 	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
 	trans.setIdentity();// 位置姿勢行列の初期化
@@ -154,20 +155,22 @@ void SetRigidCube(btVector3 pos, float mass)
 	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
 	body1->setCcdMotionThreshold(CUBE_HALF_EXTENTS);
 	body1->setCcdSweptSphereRadius(0.05 * CUBE_HALF_EXTENTS);
+
+	return body1;
 }
 
-void SetStaticCube(btVector3 pos) {
-	SetRigidCube(pos, 0.0);
+btRigidBody* SetStaticCube(btVector3 pos) {
+	return SetRigidCube(pos, 0.0);
 }
 
-void SetRigidCube(btVector3 pos) {
-	SetRigidCube(pos, 1.0);
+btRigidBody* SetRigidCube(btVector3 pos) {
+	return SetRigidCube(pos, 1.0);
 }
 
 /*!
 * 球体を任意の位置に追加
 */
-void SetRigidCapsule(btVector3 pos)
+btRigidBody* SetRigidCapsule(btVector3 pos)
 {
 	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
 	trans.setIdentity();// 位置姿勢行列の初期化
@@ -193,12 +196,14 @@ void SetRigidCapsule(btVector3 pos)
 	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
 	body1->setCcdMotionThreshold(Capsule_HALF_EXTENTS);
 	body1->setCcdSweptSphereRadius(0.05 * Capsule_HALF_EXTENTS);
+
+	return body1;
 }
 
 /*!
 * 円筒を任意の位置に追加
 */
-void SetRigidCylinder(btVector3 pos)
+btRigidBody* SetRigidCylinder(btVector3 pos)
 {
 	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
 	trans.setIdentity();// 位置姿勢行列の初期化
@@ -224,6 +229,8 @@ void SetRigidCylinder(btVector3 pos)
 	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
 	body1->setCcdMotionThreshold(CYLINDER_HALF_EXTENTS);
 	body1->setCcdSweptSphereRadius(0.05 * CYLINDER_HALF_EXTENTS);
+
+	return body1;
 }
 
 /*!
@@ -250,7 +257,7 @@ void SetRigidBodies(void)
 
 
 	// ----- 立方体オブジェクト追加 -----
-	SetRigidCube(btVector3(0, GROUND_HEIGHT + 10.0 * CUBE_HALF_EXTENTS, 0));
+	g_movebody = SetRigidCube(btVector3(0, GROUND_HEIGHT + 10.0 * CUBE_HALF_EXTENTS, 0));
 	SetStaticCube(btVector3(1, 1, 1));
 }
 
@@ -571,7 +578,6 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		case GLFW_KEY_SPACE: // スペースキーでアニメーションを1ステップだけ進める
 			g_animation_on = true; Timer(); g_animation_on = false;
 			break;
-			break;
 
 		case GLFW_KEY_R: // Rキーでシーン(シミュレーション)リセット
 			reset();
@@ -581,22 +587,48 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				float theta = (rand() % 3141) / 500.0f;
 				float rad = (rand() % 5000) / 500.0f;
-				SetRigidCube(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+				g_movebody = SetRigidCube(btVector3(rad * cos(theta), 1, rad * sin(theta)));
 			}
+			break;
+
 		case GLFW_KEY_B: // Bキーで球をランダムな位置に追加
 			{
 				float theta = (rand() % 3141) / 500.0f;
 				float rad = (rand() % 5000) / 500.0f;
-				SetRigidCapsule(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+				g_movebody = SetRigidCapsule(btVector3(rad * cos(theta), 1, rad * sin(theta)));
 			}
 			break;
+
 		case GLFW_KEY_C: // Cキーで円筒をランダムな位置に追加
+			{
+				float theta = (rand() % 3141) / 500.0f;
+				float rad = (rand() % 5000) / 500.0f;
+				g_movebody = SetRigidCylinder(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+			}
+		case  GLFW_KEY_RIGHT:
+			{
+				g_movebody->setLinearVelocity(btVector3(1.0, 0.0, 0.0));
+			}
+		break;
+			
+		case GLFW_KEY_LEFT:
+			{
+				g_movebody->setLinearVelocity(btVector3(-1.0, 0.0, 0.0));
+			}
+		break;
+
+		case  GLFW_KEY_UP:
 		{
-			float theta = (rand() % 3141) / 500.0f;
-			float rad = (rand() % 5000) / 500.0f;
-			SetRigidCylinder(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+			g_movebody->setLinearVelocity(btVector3(0.0, 0.0, 1.0));
 		}
 		break;
+
+		case  GLFW_KEY_DOWN:
+		{
+			g_movebody->setLinearVelocity(btVector3(0.0, 0.0, -1.0));
+		}
+		break;
+
 		default:
 			break;
 		}
