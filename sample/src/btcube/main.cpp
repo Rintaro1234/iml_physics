@@ -128,7 +128,7 @@ btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btColli
 /*!
 * 立方体を任意の位置に追加
 */
-void SetRigidCube(btVector3 pos)
+void SetRigidCube(btVector3 pos, float mass)
 {
 	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
 	trans.setIdentity();// 位置姿勢行列の初期化
@@ -147,7 +147,7 @@ void SetRigidCube(btVector3 pos)
 	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
 
 	// 剛体オブジェクト生成
-	btRigidBody* body1 = CreateRigidBody(1.0, trans, box_shape, g_dynamicsworld, 0);
+	btRigidBody* body1 = CreateRigidBody(mass, trans, box_shape, g_dynamicsworld, 0);
 	// ----- ここまで (立方体オブジェクト追加) -----
 
 
@@ -156,6 +156,75 @@ void SetRigidCube(btVector3 pos)
 	body1->setCcdSweptSphereRadius(0.05 * CUBE_HALF_EXTENTS);
 }
 
+void SetStaticCube(btVector3 pos) {
+	SetRigidCube(pos, 0.0);
+}
+
+void SetRigidCube(btVector3 pos) {
+	SetRigidCube(pos, 1.0);
+}
+
+/*!
+* 球体を任意の位置に追加
+*/
+void SetRigidCapsule(btVector3 pos)
+{
+	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
+	trans.setIdentity();// 位置姿勢行列の初期化
+
+	const btScalar Capsule_HALF_EXTENTS = 0.2;	// 球の変の長さの半分(中心から辺までの距離)
+
+	// ----- 球体オブジェクト追加 -----
+	// 形状設定
+	btCollisionShape* Capsule_shape = new btSphereShape(Capsule_HALF_EXTENTS);
+	g_collisionshapes.push_back(Capsule_shape); // 最後に破棄(delete)するために形状データを格納しておく
+
+	// 初期位置・姿勢
+	btQuaternion qrot(0, 0, 0, 1);
+	trans.setIdentity();// 位置姿勢行列の初期化
+	trans.setOrigin(pos);
+	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
+
+	// 剛体オブジェクト生成
+	btRigidBody* body1 = CreateRigidBody(1.0, trans, Capsule_shape, g_dynamicsworld, 0);
+	// ----- ここまで (球オブジェクト追加) -----
+
+
+	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
+	body1->setCcdMotionThreshold(Capsule_HALF_EXTENTS);
+	body1->setCcdSweptSphereRadius(0.05 * Capsule_HALF_EXTENTS);
+}
+
+/*!
+* 円筒を任意の位置に追加
+*/
+void SetRigidCylinder(btVector3 pos)
+{
+	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
+	trans.setIdentity();// 位置姿勢行列の初期化
+
+	const btScalar CYLINDER_HALF_EXTENTS = 0.2;	// 球の変の長さの半分(中心から辺までの距離)
+
+	// ----- 球体オブジェクト追加 -----
+	// 形状設定
+	btCollisionShape* cylinder_shape = new btCylinderShape(btVector3(CYLINDER_HALF_EXTENTS, CYLINDER_HALF_EXTENTS, CYLINDER_HALF_EXTENTS));
+	g_collisionshapes.push_back(cylinder_shape); // 最後に破棄(delete)するために形状データを格納しておく
+
+	// 初期位置・姿勢
+	btQuaternion qrot(0, 0, 0, 1);
+	trans.setIdentity();// 位置姿勢行列の初期化
+	trans.setOrigin(pos);
+	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
+
+	// 剛体オブジェクト生成
+	btRigidBody* body1 = CreateRigidBody(1.0, trans, cylinder_shape, g_dynamicsworld, 0);
+	// ----- ここまで (球オブジェクト追加) -----
+
+
+	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
+	body1->setCcdMotionThreshold(CYLINDER_HALF_EXTENTS);
+	body1->setCcdSweptSphereRadius(0.05 * CYLINDER_HALF_EXTENTS);
+}
 
 /*!
 * 剛体オブジェクトの追加
@@ -181,8 +250,8 @@ void SetRigidBodies(void)
 
 
 	// ----- 立方体オブジェクト追加 -----
-	// 形状設定
 	SetRigidCube(btVector3(0, GROUND_HEIGHT + 10.0 * CUBE_HALF_EXTENTS, 0));
+	SetStaticCube(btVector3(1, 1, 1));
 }
 
 /*!
@@ -508,13 +577,26 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			reset();
 			break;
 
-		case GLFW_KEY_A: // Aキーでオブジェクトをランダムな位置に追加
+		case GLFW_KEY_A: // Aキーで立体をランダムな位置に追加
 			{
 				float theta = (rand() % 3141) / 500.0f;
 				float rad = (rand() % 5000) / 500.0f;
 				SetRigidCube(btVector3(rad * cos(theta), 1, rad * sin(theta)));
 			}
+		case GLFW_KEY_B: // Bキーで球をランダムな位置に追加
+			{
+				float theta = (rand() % 3141) / 500.0f;
+				float rad = (rand() % 5000) / 500.0f;
+				SetRigidCapsule(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+			}
 			break;
+		case GLFW_KEY_C: // Cキーで円筒をランダムな位置に追加
+		{
+			float theta = (rand() % 3141) / 500.0f;
+			float rad = (rand() % 5000) / 500.0f;
+			SetRigidCylinder(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+		}
+		break;
 		default:
 			break;
 		}
