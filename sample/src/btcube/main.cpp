@@ -81,6 +81,16 @@ btPoint2PointConstraint *g_pickconstraint = 0;
 btSoftBody::Node *g_picknode = 0;
 double g_pickdist = 0.0;
 
+// 衝突応答のためのグループ
+enum CollisionGroup {
+	RX_COL_NOTHING = 0, // 0000
+	RX_COL_GROUND = 1,  // 0001
+	RX_COL_GROUP1 = 2,  // 0010
+	RX_COL_GROUP2 = 4,  // 0100
+	RX_COL_GROUP3 = 8,  // 1000
+	RX_COL_ALL = 15,	// 1111
+};
+
 
 //-----------------------------------------------------------------------------
 // Bullet用関数
@@ -92,7 +102,7 @@ double g_pickdist = 0.0;
 * @param[in] shape 形状
 * @return 作成したbtRigidBody
 */
-btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btCollisionShape* shape, btDynamicsWorld* world = 0, int index = 0)
+btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btCollisionShape* shape, int myGroup, int targetGroup, btDynamicsWorld* world = 0, int index = 0)
 {
 	//btAssert((!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE));
 
@@ -100,7 +110,7 @@ btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btColli
 	bool isDynamic = (mass != 0.0);
 
 	btVector3 inertia(0, 0, 0);
-	if(isDynamic)
+	if (isDynamic)
 		shape->calculateLocalInertia(mass, inertia);
 
 	btDefaultMotionState* motion_state = new btDefaultMotionState(init_trans);
@@ -111,18 +121,30 @@ btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btColli
 
 	body->setUserIndex(index);
 
-	if(mass <= 1e-10){
+	if (mass <= 1e-10) {
 		// Kinematicオブジェクトとして設定(stepSimulationしても運動の計算を行わないようにする)
 		body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
 		// 常にスリープ状態にする
 		body->setActivationState(DISABLE_DEACTIVATION);
 	}
 
-	if(world){
-		world->addRigidBody(body);
+	if (world) {
+		world->addRigidBody(body, myGroup, targetGroup);
 	}
 
 	return body;
+}
+
+/*!
+* Bullet剛体(btRigidBody)の作成
+* @param[in] mass 質量
+* @param[in] init_tras 初期位置・姿勢
+* @param[in] shape 形状
+* @return 作成したbtRigidBody
+*/
+btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btCollisionShape* shape, btDynamicsWorld* world = 0, int index = 0)
+{
+	return CreateRigidBody(mass, init_trans, shape, RX_COL_ALL, RX_COL_ALL, world, index);
 }
 
 
@@ -148,7 +170,7 @@ btRigidBody* SetRigidCube(btVector3 pos, float mass)
 	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
 
 	// 剛体オブジェクト生成
-	btRigidBody* body1 = CreateRigidBody(mass, trans, box_shape, g_dynamicsworld, 0);
+	btRigidBody* body1 = CreateRigidBody(mass, trans, box_shape, RX_COL_GROUP1, RX_COL_GROUP1 | RX_COL_GROUND, g_dynamicsworld, 0);
 	// ----- ここまで (立方体オブジェクト追加) -----
 
 
@@ -189,7 +211,7 @@ btRigidBody* SetRigidSphere(btVector3 pos)
 	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
 
 	// 剛体オブジェクト生成
-	btRigidBody* body1 = CreateRigidBody(1.0, trans, Capsule_shape, g_dynamicsworld, 0);
+	btRigidBody* body1 = CreateRigidBody(1.0, trans, Capsule_shape, RX_COL_GROUP2, RX_COL_GROUP2 | RX_COL_GROUND, g_dynamicsworld, 0);
 	// ----- ここまで (球オブジェクト追加) -----
 
 
@@ -219,7 +241,7 @@ void throughSphere(btVector3 pos, btVector3 dir, float spd)
 	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
 
 	// 剛体オブジェクト生成
-	btRigidBody* body1 = CreateRigidBody(1.0, trans, Capsule_shape, g_dynamicsworld, 0);
+	btRigidBody* body1 = CreateRigidBody(1.0, trans, Capsule_shape, RX_COL_GROUP3, RX_COL_GROUP3 | RX_COL_GROUND, g_dynamicsworld, 0);
 	// ----- ここまで (球オブジェクト追加) -----
 
 
@@ -528,7 +550,6 @@ void DrawBulletObjects(void* x = 0)
 			}
 		}
 	}
-
 }
 
 
