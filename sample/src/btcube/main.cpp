@@ -170,7 +170,7 @@ btRigidBody* SetRigidCube(btVector3 pos) {
 /*!
 * 球体を任意の位置に追加
 */
-btRigidBody* SetRigidCapsule(btVector3 pos)
+btRigidBody* SetRigidSphere(btVector3 pos)
 {
 	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
 	trans.setIdentity();// 位置姿勢行列の初期化
@@ -198,6 +198,37 @@ btRigidBody* SetRigidCapsule(btVector3 pos)
 	body1->setCcdSweptSphereRadius(0.05 * Capsule_HALF_EXTENTS);
 
 	return body1;
+}
+
+void throughSphere(btVector3 pos, btVector3 dir, float spd) 
+{
+	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
+	trans.setIdentity();// 位置姿勢行列の初期化
+
+	const btScalar Capsule_HALF_EXTENTS = 0.2;	// 球の変の長さの半分(中心から辺までの距離)
+
+	// ----- 球体オブジェクト追加 -----
+	// 形状設定
+	btCollisionShape* Capsule_shape = new btSphereShape(Capsule_HALF_EXTENTS);
+	g_collisionshapes.push_back(Capsule_shape); // 最後に破棄(delete)するために形状データを格納しておく
+
+	// 初期位置・姿勢
+	btQuaternion qrot(0, 0, 0, 1);
+	trans.setIdentity();// 位置姿勢行列の初期化
+	trans.setOrigin(pos);
+	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
+
+	// 剛体オブジェクト生成
+	btRigidBody* body1 = CreateRigidBody(1.0, trans, Capsule_shape, g_dynamicsworld, 0);
+	// ----- ここまで (球オブジェクト追加) -----
+
+
+	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
+	body1->setCcdMotionThreshold(Capsule_HALF_EXTENTS);
+	body1->setCcdSweptSphereRadius(0.05 * Capsule_HALF_EXTENTS);
+
+	// 初速度を与える
+	body1->setLinearVelocity(dir.normalize() * spd);
 }
 
 /*!
@@ -566,7 +597,6 @@ void Display(void)
 					glColor3d(1, 0, 0);
 					DrawSphereVBO();
 				glPopMatrix();
-				cout << ptB[0] << ", " << ptB[1] << ", " << ptB[2] << endl;
 			}
 		}
 	}
@@ -630,7 +660,7 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				float theta = (rand() % 3141) / 500.0f;
 				float rad = (rand() % 5000) / 500.0f;
-				g_movebody = SetRigidCapsule(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+				g_movebody = SetRigidSphere(btVector3(rad * cos(theta), 1, rad * sin(theta)));
 			}
 			break;
 
@@ -662,6 +692,17 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
 			g_movebody->setLinearVelocity(btVector3(0.0, 0.0, -1.0));
 		}
+		break;
+
+		case GLFW_KEY_T:
+		{
+			// 視点位置，視線方向
+			glm::vec3 eye_pos(0.0), eye_dir(0.0);
+			g_view.CalLocalPos(eye_pos, glm::vec3(0.0));
+			g_view.CalLocalRot(eye_dir, glm::vec3(0.0, 0.0, -1.0));
+			throughSphere(btVector3(eye_pos[0], eye_pos[1], eye_pos[2]), btVector3(eye_dir[0], eye_dir[1], eye_dir[2]), 32);
+		}
+
 		break;
 
 		default:
