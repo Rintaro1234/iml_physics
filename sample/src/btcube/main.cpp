@@ -271,7 +271,7 @@ void InitBullet(void)
 	btCollisionDispatcher *dispatcher = new btCollisionDispatcher(config);
 
 	// ブロードフェーズ法の設定(Dynamic AABB tree method)
-	btDbvtBroadphase *broadphase = new btDbvtBroadphase();
+	btAxisSweep3* broadphase = new btAxisSweep3(btVector3(-100, -100, -100), btVector3(100, 100, 100));
 
 	// 拘束(剛体間リンク)のソルバ設定
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver();
@@ -535,6 +535,41 @@ void Display(void)
 	glm::vec3 light_pos(LIGHT0_POS[0], LIGHT0_POS[1], LIGHT0_POS[2]);
 	ShadowMap::Frustum light = CalFrustum(80, 0.02, 20.0, g_shadowmap_res, g_shadowmap_res, light_pos, glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
 	g_shadowmap.RenderSceneWithShadow(light, DrawBulletObjects, 0);
+
+	int num_manifolds = g_dynamicsworld->getDispatcher()->getNumManifolds(); // 衝突候補のペアの数
+	for (int i = 0; i < num_manifolds; ++i) {	// 各ペアを調べていく
+		// 衝突点を格納するためのキャッシュ(manifold)から情報を取得
+		btPersistentManifold* manifold = g_dynamicsworld->getDispatcher()->getManifoldByIndexInternal(i);
+		btCollisionObject* obA = const_cast<btCollisionObject*>(manifold->getBody0()); // 衝突ペアのうちのオブジェクトA
+		btCollisionObject* obB = const_cast<btCollisionObject*>(manifold->getBody1()); // 衝突ペアのうちのオブジェクトB
+
+		// 各オブジェクトのユーザーインデックス(練習問題7で使います)
+		int user_idx0 = obA->getUserIndex();
+		int user_idx1 = obB->getUserIndex();
+
+		int num_contacts = manifold->getNumContacts(); // オブジェクト間の衝突点数
+				
+		for (int j = 0; j < num_contacts; ++j) {
+			btManifoldPoint& pt = manifold->getContactPoint(j); // 衝突点キャッシュから衝突点座標を取得
+			if (pt.getDistance() <= 0.0f) { // 衝突点間の距離がゼロ以下なら実際に衝突している
+				// オブジェクトAの衝突点座標(const変数にしない場合の例)
+				btVector3& ptA = const_cast<btVector3&>(pt.getPositionWorldOnA());
+
+				// オブジェクトBの衝突点座標と法線(const変数として取得する場合の例)
+				const btVector3& ptB = pt.getPositionWorldOnB();
+				const btVector3& normalOnB = pt.m_normalWorldOnB;
+
+				// ここに衝突点情報を格納するor衝突点描画するコードを書く
+				glPushMatrix();
+					glTranslatef(ptB[0], ptB[1], ptB[2]);
+					glScalef(0.1, 0.1, 0.1);
+					glColor3d(1, 0, 0);
+					DrawSphereVBO();
+				glPopMatrix();
+				cout << ptB[0] << ", " << ptB[1] << ", " << ptB[2] << endl;
+			}
+		}
+	}
 
 	glPopMatrix();
 }
