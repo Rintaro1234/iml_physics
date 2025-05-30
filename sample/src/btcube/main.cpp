@@ -224,30 +224,13 @@ btRigidBody* SetRigidSphere(btVector3 pos)
 
 void throughSphere(btVector3 pos, btVector3 dir, float spd) 
 {
-	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
-	trans.setIdentity();// 位置姿勢行列の初期化
-
-	const btScalar Capsule_HALF_EXTENTS = 0.2;	// 球の変の長さの半分(中心から辺までの距離)
-
-	// ----- 球体オブジェクト追加 -----
-	// 形状設定
-	btCollisionShape* Capsule_shape = new btSphereShape(Capsule_HALF_EXTENTS);
-	g_collisionshapes.push_back(Capsule_shape); // 最後に破棄(delete)するために形状データを格納しておく
-
-	// 初期位置・姿勢
-	btQuaternion qrot(0, 0, 0, 1);
-	trans.setIdentity();// 位置姿勢行列の初期化
-	trans.setOrigin(pos);
-	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
 
 	// 剛体オブジェクト生成
-	btRigidBody* body1 = CreateRigidBody(1.0, trans, Capsule_shape, RX_COL_GROUP3, RX_COL_GROUP3 | RX_COL_GROUND, g_dynamicsworld, 0);
+	btRigidBody* body1 = SetRigidSphere(pos);
 	// ----- ここまで (球オブジェクト追加) -----
 
-
-	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
-	body1->setCcdMotionThreshold(Capsule_HALF_EXTENTS);
-	body1->setCcdSweptSphereRadius(0.05 * Capsule_HALF_EXTENTS);
+	// 反発係数の設定
+	body1->setRestitution(10.0);
 
 	// 初速度を与える
 	body1->setLinearVelocity(dir.normalize() * spd);
@@ -525,7 +508,11 @@ void DrawBulletObjects(void* x = 0)
 					rot = obj->getWorldTransform().getBasis();
 				}
 
-				if(body && body->getInvMass() > 1e-6){
+				if (body && !body->isActive()) {
+					// スリープ中のオブジェクトは赤で描画
+					glMaterialfv(GL_FRONT, GL_DIFFUSE, difr);
+				}
+				else if(body && body->getInvMass() > 1e-6){
 					// Dynamicボディは青で描画
 					glMaterialfv(GL_FRONT, GL_DIFFUSE, difb);
 				}
