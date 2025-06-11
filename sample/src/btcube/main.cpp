@@ -73,6 +73,7 @@ float g_dt = 0.002;	//!< 時間ステップ幅
 btDynamicsWorld* g_dynamicsworld;	//!< Bulletワールド
 btAlignedObjectArray<btCollisionShape*>	g_collisionshapes;		//!< 剛体オブジェクトの形状を格納する動的配列
 btRigidBody* g_movebody; // 動かせる静的オブジェクト
+btTypedConstraint* g_constraint; // キューブ同士の結合
 
 // マウスピック
 btVector3 g_pickpos;
@@ -151,16 +152,14 @@ btRigidBody* CreateRigidBody(double mass, const btTransform& init_trans, btColli
 /*!
 * 立方体を任意の位置に追加
 */
-btRigidBody* SetRigidCube(btVector3 pos, float mass)
+btRigidBody* SetRigidCube(btVector3 pos, btVector3 size, float mass)
 {
 	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
 	trans.setIdentity();// 位置姿勢行列の初期化
 
-	const btScalar CUBE_HALF_EXTENTS = 0.2;	// 立方体の変の長さの半分(中心から辺までの距離)
-
 	// ----- 立方体オブジェクト追加 -----
 	// 形状設定
-	btCollisionShape* box_shape = new btBoxShape(btVector3(CUBE_HALF_EXTENTS, CUBE_HALF_EXTENTS, CUBE_HALF_EXTENTS));
+	btCollisionShape* box_shape = new btBoxShape(size);
 	g_collisionshapes.push_back(box_shape); // 最後に破棄(delete)するために形状データを格納しておく
 
 	// 初期位置・姿勢
@@ -175,18 +174,28 @@ btRigidBody* SetRigidCube(btVector3 pos, float mass)
 
 
 	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
-	body1->setCcdMotionThreshold(CUBE_HALF_EXTENTS);
-	body1->setCcdSweptSphereRadius(0.05 * CUBE_HALF_EXTENTS);
+	body1->setCcdMotionThreshold(size.norm());
+	body1->setCcdSweptSphereRadius(0.05 * size.norm());
 
 	return body1;
 }
 
+btRigidBody* SetStaticCube(btVector3 pos, btVector3 size) {
+	return SetRigidCube(pos, size, 0.0);
+}
+
 btRigidBody* SetStaticCube(btVector3 pos) {
-	return SetRigidCube(pos, 0.0);
+	const btScalar CUBE_HALF_EXTENTS = 0.2;	// 立方体の変の長さの半分(中心から辺までの距離)
+	return SetRigidCube(pos, btVector3(CUBE_HALF_EXTENTS, CUBE_HALF_EXTENTS, CUBE_HALF_EXTENTS), 0.0);
+}
+
+btRigidBody* SetRigidCube(btVector3 pos, btVector3 size) {
+	return SetRigidCube(pos, size, 1.0);
 }
 
 btRigidBody* SetRigidCube(btVector3 pos) {
-	return SetRigidCube(pos, 1.0);
+	const btScalar CUBE_HALF_EXTENTS = 0.2;	// 立方体の変の長さの半分(中心から辺までの距離)
+	return SetRigidCube(pos, btVector3(CUBE_HALF_EXTENTS, CUBE_HALF_EXTENTS, CUBE_HALF_EXTENTS),1.0);
 }
 
 /*!
@@ -239,16 +248,14 @@ void throughSphere(btVector3 pos, btVector3 dir, float spd)
 /*!
 * 円筒を任意の位置に追加
 */
-btRigidBody* SetRigidCylinder(btVector3 pos)
+btRigidBody* SetRigidCylinder(btVector3 pos, btVector3 size)
 {
 	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
 	trans.setIdentity();// 位置姿勢行列の初期化
 
-	const btScalar CYLINDER_HALF_EXTENTS = 0.2;	// 球の変の長さの半分(中心から辺までの距離)
-
 	// ----- 球体オブジェクト追加 -----
 	// 形状設定
-	btCollisionShape* cylinder_shape = new btCylinderShape(btVector3(CYLINDER_HALF_EXTENTS, CYLINDER_HALF_EXTENTS, CYLINDER_HALF_EXTENTS));
+	btCollisionShape* cylinder_shape = new btCylinderShape(size);
 	g_collisionshapes.push_back(cylinder_shape); // 最後に破棄(delete)するために形状データを格納しておく
 
 	// 初期位置・姿勢
@@ -263,10 +270,72 @@ btRigidBody* SetRigidCylinder(btVector3 pos)
 
 
 	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
-	body1->setCcdMotionThreshold(CYLINDER_HALF_EXTENTS);
-	body1->setCcdSweptSphereRadius(0.05 * CYLINDER_HALF_EXTENTS);
+	body1->setCcdMotionThreshold(size.norm());
+	body1->setCcdSweptSphereRadius(0.05 * size.norm());
 
 	return body1;
+}
+
+btRigidBody* SetRigidCylinder(btVector3 pos) {
+	const btScalar CYLINDER_HALF_EXTENTS = 0.2;	// 球の変の長さの半分(中心から辺までの距離)
+	return SetRigidCylinder(pos, btVector3(CYLINDER_HALF_EXTENTS, CYLINDER_HALF_EXTENTS, CYLINDER_HALF_EXTENTS));
+}
+
+btRigidBody* SetRigidCylinderX(btVector3 pos, btVector3 size)
+{
+	btTransform trans;	// 剛体オブジェクトの位置姿勢を格納する変数(行列)
+	trans.setIdentity();// 位置姿勢行列の初期化
+
+	// ----- 球体オブジェクト追加 -----
+	// 形状設定
+	btCollisionShape* cylinder_shape = new btCylinderShapeX(size);
+	g_collisionshapes.push_back(cylinder_shape); // 最後に破棄(delete)するために形状データを格納しておく
+
+	// 初期位置・姿勢
+	btQuaternion qrot(0, 0, 0, 1);
+	trans.setIdentity();// 位置姿勢行列の初期化
+	trans.setOrigin(pos);
+	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
+
+	// 剛体オブジェクト生成
+	btRigidBody* body1 = CreateRigidBody(1.0, trans, cylinder_shape, g_dynamicsworld, 0);
+	// ----- ここまで (球オブジェクト追加) -----
+
+
+	// すり抜け防止用Swept sphereの設定(CCD:Continuous Collision Detection)
+	body1->setCcdMotionThreshold(size.norm());
+	body1->setCcdSweptSphereRadius(0.05 * size.norm());
+
+	return body1;
+}
+
+// 車のオブジェクトを生成
+void cleateCarObject(btVector3 pos) {
+	const btVector3 bodySize = btVector3(0.3, 0.1, 0.4);
+	const btVector3 wheelSize = btVector3(0.08, 0.2, 0.2);
+	
+	// 本体を追加
+	btRigidBody* body = SetRigidCube(pos, bodySize);
+
+	// 車輪を追加
+	btVector3 wheel0Pos = btVector3(bodySize[0] + wheelSize[0], 0, bodySize[2] - 0.1);
+	btVector3 wheel1Pos = btVector3(-(bodySize[0] + wheelSize[0]), 0, bodySize[2] - 0.1);
+	btVector3 wheel2Pos = btVector3(bodySize[0] + wheelSize[0], 0, -(bodySize[2] - 0.1));
+	btVector3 wheel3Pos = btVector3(-(bodySize[0] + wheelSize[0]), 0, -(bodySize[2] - 0.1));
+	btRigidBody* wheel0 = SetRigidCylinderX(pos + wheel0Pos, wheelSize);
+	btRigidBody* wheel1 = SetRigidCylinderX(pos + wheel1Pos, wheelSize);
+	btRigidBody* wheel2 = SetRigidCylinderX(pos + wheel2Pos, wheelSize);
+	btRigidBody* wheel3 = SetRigidCylinderX(pos + wheel3Pos, wheelSize);
+
+	// 本体と車体をくっつける
+	btTypedConstraint* constraintb0 = new btHingeConstraint(*body, *wheel0, wheel0Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btTypedConstraint* constraintb1 = new btHingeConstraint(*body, *wheel1, wheel1Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btTypedConstraint* constraintb2 = new btHingeConstraint(*body, *wheel2, wheel2Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btTypedConstraint* constraintb3 = new btHingeConstraint(*body, *wheel3, wheel3Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	g_dynamicsworld->addConstraint(constraintb0);
+	g_dynamicsworld->addConstraint(constraintb1);
+	g_dynamicsworld->addConstraint(constraintb2);
+	g_dynamicsworld->addConstraint(constraintb3);
 }
 
 /*!
@@ -295,6 +364,28 @@ void SetRigidBodies(void)
 	// ----- 立方体オブジェクト追加 -----
 	g_movebody = SetRigidCube(btVector3(0, GROUND_HEIGHT + 10.0 * CUBE_HALF_EXTENTS, 0));
 	SetStaticCube(btVector3(1, 1, 1));
+
+	// ----- 立方体同士の拘束 -----
+	btRigidBody* body1 = SetRigidCube(btVector3(1, GROUND_HEIGHT + 10 * CUBE_HALF_EXTENTS, 0));
+	btRigidBody* body2 = SetRigidCube(btVector3(1, GROUND_HEIGHT + 10 * CUBE_HALF_EXTENTS, 0));
+
+	// body0を空間上に拘束
+	btVector3 pivot0(-CUBE_HALF_EXTENTS, -CUBE_HALF_EXTENTS, -CUBE_HALF_EXTENTS);
+	btTypedConstraint* joint01 = new btPoint2PointConstraint(*body1, pivot0);
+	g_dynamicsworld->addConstraint(joint01);
+
+	// body1をbody1に拘束
+	btVector3 pivot1( CUBE_HALF_EXTENTS,  CUBE_HALF_EXTENTS,  CUBE_HALF_EXTENTS);
+	btVector3 pivot2(-CUBE_HALF_EXTENTS, -CUBE_HALF_EXTENTS, -CUBE_HALF_EXTENTS);
+	btTypedConstraint* joint12 = new btPoint2PointConstraint(*body1, *body2, pivot1, pivot2);
+	joint12->enableFeedback(true);
+	btJointFeedback* feedback = new btJointFeedback();
+	joint12->setJointFeedback(feedback);
+	g_constraint = joint12;
+	g_dynamicsworld->addConstraint(joint12);
+
+	// 車の追加
+	cleateCarObject(btVector3(0, 0.5, 0));
 }
 
 /*!
@@ -624,6 +715,20 @@ void Timer(void)
 		}
 		g_currentstep++;
 	}
+
+	// 拘束がちぎれないか確認
+	if(g_constraint) {
+		btJointFeedback* f = g_constraint->getJointFeedback();
+		// 力を取得
+		btVector3 force1 = f->m_appliedForceBodyA;
+		btVector3 force2 = f->m_appliedForceBodyB;
+		// 力はベクトルなので、スカラーを取得し、ちぎれないか確認
+		if (force1.norm() > 1000.0 || force2.norm() > 1000.0) {
+			g_dynamicsworld->removeConstraint(g_constraint);
+			delete g_constraint;
+			g_constraint = 0;
+		}
+	}
 }
 
 
@@ -702,6 +807,7 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		break;
 
+		// Tキーで球を投げる
 		case GLFW_KEY_T:
 		{
 			// 視点位置，視線方向
