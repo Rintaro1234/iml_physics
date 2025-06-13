@@ -87,13 +87,14 @@ struct {
 	btRigidBody* flontLeftWheel;
 	btRigidBody* rearRightWheel;
 	btRigidBody* rearLeftWheel;
-	btHingeConstraint* flontRightJoint;
-	btHingeConstraint* flontLeftJoint;
+	btHinge2Constraint* flontRightJoint;
+	btHinge2Constraint* flontLeftJoint;
 	btHingeConstraint* rearRightJoint;
 	btHingeConstraint* rearLeftJoint;
 }typedef car_t;
 
 car_t g_carWheels; // 車を保持する
+float g_targetStearingAngle = 0; // タイヤの目標角度
 
 // 衝突応答のためのグループ
 enum CollisionGroup {
@@ -347,8 +348,8 @@ car_t cleateCarObject(btVector3 pos) {
 	wheel3->setRestitution(1);
 
 	// 本体と車体をくっつける
-	btHingeConstraint* constraintb0 = new btHingeConstraint(*body, *wheel0, wheel0Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
-	btHingeConstraint* constraintb1 = new btHingeConstraint(*body, *wheel1, wheel1Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btHinge2Constraint* constraintb0 = new btHinge2Constraint(*body, *wheel0, pos + wheel0Pos, btVector3(0, 1, 0), btVector3(1, 0, 0));
+	btHinge2Constraint* constraintb1 = new btHinge2Constraint(*body, *wheel1, pos + wheel1Pos, btVector3(0, 1, 0), btVector3(1, 0, 0));
 	btHingeConstraint* constraintb2 = new btHingeConstraint(*body, *wheel2, wheel2Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
 	btHingeConstraint* constraintb3 = new btHingeConstraint(*body, *wheel3, wheel3Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
 	g_dynamicsworld->addConstraint(constraintb0);
@@ -356,9 +357,20 @@ car_t cleateCarObject(btVector3 pos) {
 	g_dynamicsworld->addConstraint(constraintb2);
 	g_dynamicsworld->addConstraint(constraintb3);
 
+	// 前輪の設定
+	constraintb0->setLowerLimit(btRadians(-30.0));
+	constraintb0->setUpperLimit(btRadians( 30.0));
+	constraintb0->setLinearLowerLimit(btVector3(0, 0, 0));
+	constraintb0->setLinearUpperLimit(btVector3(0, 0, 0));
+	(constraintb0->getRotationalLimitMotor(0))->m_enableMotor = true;
+	(constraintb0->getRotationalLimitMotor(2))->m_enableMotor = true;
+	constraintb1->setLowerLimit(btRadians(-30.0));
+	constraintb1->setUpperLimit(btRadians( 30.0));
+	constraintb1->setLinearLowerLimit(btVector3(0, 0, 0));
+	constraintb1->setLinearUpperLimit(btVector3(0, 0, 0));
+	(constraintb1->getRotationalLimitMotor(0))->m_enableMotor = true;
+	(constraintb1->getRotationalLimitMotor(2))->m_enableMotor = true;
 	// モータをつける
-	constraintb0->enableAngularMotor(true, btRadians(0.0), 1.0);
-	constraintb1->enableAngularMotor(true, btRadians(0.0), 1.0);
 	constraintb2->enableAngularMotor(true, btRadians(0.0), 1.0);
 	constraintb3->enableAngularMotor(true, btRadians(0.0), 1.0);
 
@@ -743,6 +755,10 @@ void Timer(void)
 		g_currentstep++;
 	}
 
+	const double gain = 1;
+	(g_carWheels.flontLeftJoint->getRotationalLimitMotor(2))->m_targetVelocity = gain * (btRadians(g_targetStearingAngle) - g_carWheels.flontLeftJoint->getAngle1());
+	(g_carWheels.flontRightJoint->getRotationalLimitMotor(2))->m_targetVelocity = gain * (btRadians(g_targetStearingAngle) - g_carWheels.flontRightJoint->getAngle1());
+
 	// 拘束がちぎれないか確認
 	if(g_constraint) {
 		btJointFeedback* f = g_constraint->getJointFeedback();
@@ -812,20 +828,20 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			}
 		case  GLFW_KEY_RIGHT:
 			{
-				
+				g_targetStearingAngle = 30;
 			}
 		break;
 			
 		case GLFW_KEY_LEFT:
 			{
-				
+				g_targetStearingAngle = -30;
 			}
 		break;
 
 		case  GLFW_KEY_UP:
 		{
-			g_carWheels.flontLeftJoint->setMotorTargetVelocity(btRadians(360.0));
-			g_carWheels.flontRightJoint->setMotorTargetVelocity(btRadians(360.0));
+			(g_carWheels.flontLeftJoint->getRotationalLimitMotor(0))->m_targetVelocity = btRadians(360.0);
+			(g_carWheels.flontRightJoint->getRotationalLimitMotor(0))->m_targetVelocity = btRadians(360.0);
 			g_carWheels.rearLeftJoint->setMotorTargetVelocity(btRadians(360.0));
 			g_carWheels.rearRightJoint->setMotorTargetVelocity(btRadians(360.0));
 		}
@@ -833,10 +849,10 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 
 		case  GLFW_KEY_DOWN:
 		{
-			g_carWheels.flontLeftJoint->setMotorTargetVelocity(btRadians(-360.0));
-			g_carWheels.flontRightJoint->setMotorTargetVelocity(btRadians(-360.0));
-			g_carWheels.rearLeftJoint->setMotorTargetVelocity(btRadians(-360.0));
-			g_carWheels.rearRightJoint->setMotorTargetVelocity(btRadians(-360.0));
+			(g_carWheels.flontLeftJoint->getRotationalLimitMotor(0))->m_targetVelocity = btRadians(-720.0);
+			(g_carWheels.flontRightJoint->getRotationalLimitMotor(0))->m_targetVelocity = btRadians(-720.0);
+			g_carWheels.rearLeftJoint->setMotorTargetVelocity(btRadians(-720.0));
+			g_carWheels.rearRightJoint->setMotorTargetVelocity(btRadians(-720.0));
 		}
 		break;
 
