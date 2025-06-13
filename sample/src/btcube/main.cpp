@@ -72,7 +72,6 @@ float g_dt = 0.002;	//!< 時間ステップ幅
 // Bullet
 btDynamicsWorld* g_dynamicsworld;	//!< Bulletワールド
 btAlignedObjectArray<btCollisionShape*>	g_collisionshapes;		//!< 剛体オブジェクトの形状を格納する動的配列
-btRigidBody* g_movebody; // 動かせる静的オブジェクト
 btTypedConstraint* g_constraint; // キューブ同士の結合
 
 // マウスピック
@@ -81,6 +80,20 @@ btRigidBody *g_pickbody = 0;
 btPoint2PointConstraint *g_pickconstraint = 0;
 btSoftBody::Node *g_picknode = 0;
 double g_pickdist = 0.0;
+
+// 車の構造体
+struct {
+	btRigidBody* flontRightWheel;
+	btRigidBody* flontLeftWheel;
+	btRigidBody* rearRightWheel;
+	btRigidBody* rearLeftWheel;
+	btHingeConstraint* flontRightJoint;
+	btHingeConstraint* flontLeftJoint;
+	btHingeConstraint* rearRightJoint;
+	btHingeConstraint* rearLeftJoint;
+}typedef car_t;
+
+car_t g_carWheels; // 車を保持する
 
 // 衝突応答のためのグループ
 enum CollisionGroup {
@@ -298,7 +311,7 @@ btRigidBody* SetRigidCylinderX(btVector3 pos, btVector3 size)
 	trans.setRotation(qrot);	// 四元数を行列に変換して姿勢行列に掛け合わせる
 
 	// 剛体オブジェクト生成
-	btRigidBody* body1 = CreateRigidBody(1.0, trans, cylinder_shape, g_dynamicsworld, 0);
+	btRigidBody* body1 = CreateRigidBody(20.0, trans, cylinder_shape, RX_COL_GROUP2, RX_COL_GROUP2 | RX_COL_GROUND, g_dynamicsworld, 0);
 	// ----- ここまで (球オブジェクト追加) -----
 
 
@@ -310,12 +323,12 @@ btRigidBody* SetRigidCylinderX(btVector3 pos, btVector3 size)
 }
 
 // 車のオブジェクトを生成
-void cleateCarObject(btVector3 pos) {
+car_t cleateCarObject(btVector3 pos) {
 	const btVector3 bodySize = btVector3(0.3, 0.1, 0.4);
 	const btVector3 wheelSize = btVector3(0.08, 0.2, 0.2);
 	
 	// 本体を追加
-	btRigidBody* body = SetRigidCube(pos, bodySize);
+	btRigidBody* body = SetRigidCube(pos, bodySize, 1);
 
 	// 車輪を追加
 	btVector3 wheel0Pos = btVector3(bodySize[0] + wheelSize[0], 0, bodySize[2] - 0.1);
@@ -327,15 +340,29 @@ void cleateCarObject(btVector3 pos) {
 	btRigidBody* wheel2 = SetRigidCylinderX(pos + wheel2Pos, wheelSize);
 	btRigidBody* wheel3 = SetRigidCylinderX(pos + wheel3Pos, wheelSize);
 
+	// タイヤの摩擦を決定
+	wheel0->setRestitution(1);
+	wheel1->setRestitution(1);
+	wheel2->setRestitution(1);
+	wheel3->setRestitution(1);
+
 	// 本体と車体をくっつける
-	btTypedConstraint* constraintb0 = new btHingeConstraint(*body, *wheel0, wheel0Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
-	btTypedConstraint* constraintb1 = new btHingeConstraint(*body, *wheel1, wheel1Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
-	btTypedConstraint* constraintb2 = new btHingeConstraint(*body, *wheel2, wheel2Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
-	btTypedConstraint* constraintb3 = new btHingeConstraint(*body, *wheel3, wheel3Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btHingeConstraint* constraintb0 = new btHingeConstraint(*body, *wheel0, wheel0Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btHingeConstraint* constraintb1 = new btHingeConstraint(*body, *wheel1, wheel1Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btHingeConstraint* constraintb2 = new btHingeConstraint(*body, *wheel2, wheel2Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
+	btHingeConstraint* constraintb3 = new btHingeConstraint(*body, *wheel3, wheel3Pos, btVector3(0, 0, 0), btVector3(1, 0, 0), btVector3(1, 0, 0));
 	g_dynamicsworld->addConstraint(constraintb0);
 	g_dynamicsworld->addConstraint(constraintb1);
 	g_dynamicsworld->addConstraint(constraintb2);
 	g_dynamicsworld->addConstraint(constraintb3);
+
+	// モータをつける
+	constraintb0->enableAngularMotor(true, btRadians(0.0), 1.0);
+	constraintb1->enableAngularMotor(true, btRadians(0.0), 1.0);
+	constraintb2->enableAngularMotor(true, btRadians(0.0), 1.0);
+	constraintb3->enableAngularMotor(true, btRadians(0.0), 1.0);
+
+	return car_t{ wheel0, wheel1, wheel2, wheel3, constraintb0, constraintb1, constraintb2, constraintb3 };
 }
 
 /*!
@@ -362,7 +389,7 @@ void SetRigidBodies(void)
 
 
 	// ----- 立方体オブジェクト追加 -----
-	g_movebody = SetRigidCube(btVector3(0, GROUND_HEIGHT + 10.0 * CUBE_HALF_EXTENTS, 0));
+	SetRigidCube(btVector3(0, GROUND_HEIGHT + 10.0 * CUBE_HALF_EXTENTS, 0));
 	SetStaticCube(btVector3(1, 1, 1));
 
 	// ----- 立方体同士の拘束 -----
@@ -385,7 +412,7 @@ void SetRigidBodies(void)
 	g_dynamicsworld->addConstraint(joint12);
 
 	// 車の追加
-	cleateCarObject(btVector3(0, 0.5, 0));
+	g_carWheels = cleateCarObject(btVector3(0, 0.5, 0));
 }
 
 /*!
@@ -765,7 +792,7 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				float theta = (rand() % 3141) / 500.0f;
 				float rad = (rand() % 5000) / 500.0f;
-				g_movebody = SetRigidCube(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+				SetRigidCube(btVector3(rad * cos(theta), 1, rad * sin(theta)));
 			}
 			break;
 
@@ -773,7 +800,7 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				float theta = (rand() % 3141) / 500.0f;
 				float rad = (rand() % 5000) / 500.0f;
-				g_movebody = SetRigidSphere(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+				SetRigidSphere(btVector3(rad * cos(theta), 1, rad * sin(theta)));
 			}
 			break;
 
@@ -781,29 +808,35 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				float theta = (rand() % 3141) / 500.0f;
 				float rad = (rand() % 5000) / 500.0f;
-				g_movebody = SetRigidCylinder(btVector3(rad * cos(theta), 1, rad * sin(theta)));
+				SetRigidCylinder(btVector3(rad * cos(theta), 1, rad * sin(theta)));
 			}
 		case  GLFW_KEY_RIGHT:
 			{
-				g_movebody->setLinearVelocity(btVector3(1.0, 0.0, 0.0));
+				
 			}
 		break;
 			
 		case GLFW_KEY_LEFT:
 			{
-				g_movebody->setLinearVelocity(btVector3(-1.0, 0.0, 0.0));
+				
 			}
 		break;
 
 		case  GLFW_KEY_UP:
 		{
-			g_movebody->setLinearVelocity(btVector3(0.0, 0.0, 1.0));
+			g_carWheels.flontLeftJoint->setMotorTargetVelocity(btRadians(360.0));
+			g_carWheels.flontRightJoint->setMotorTargetVelocity(btRadians(360.0));
+			g_carWheels.rearLeftJoint->setMotorTargetVelocity(btRadians(360.0));
+			g_carWheels.rearRightJoint->setMotorTargetVelocity(btRadians(360.0));
 		}
 		break;
 
 		case  GLFW_KEY_DOWN:
 		{
-			g_movebody->setLinearVelocity(btVector3(0.0, 0.0, -1.0));
+			g_carWheels.flontLeftJoint->setMotorTargetVelocity(btRadians(-360.0));
+			g_carWheels.flontRightJoint->setMotorTargetVelocity(btRadians(-360.0));
+			g_carWheels.rearLeftJoint->setMotorTargetVelocity(btRadians(-360.0));
+			g_carWheels.rearRightJoint->setMotorTargetVelocity(btRadians(-360.0));
 		}
 		break;
 
